@@ -83,7 +83,16 @@ def resources(): return render_template('resources.html', active='resources')
 def compare():
     ups = db.session.query(Video.up_name).distinct().all()
     up_list = [u[0] for u in ups]
-    return render_template('compare.html', active='compare', up_list=up_list)
+
+    # 预加载每个 UP 的封面作为头像占位
+    videos = db.session.query(Video.up_name, Video.pic_url, Video.pubdate) \
+        .order_by(Video.up_name, Video.pubdate.desc()).all()
+    up_avatars = {}
+    for up_name, pic_url, _ in videos:
+        if up_name not in up_avatars and pic_url:
+            up_avatars[up_name] = pic_url
+
+    return render_template('compare.html', active='compare', up_list=up_list, up_avatars=up_avatars)
 
 
 @app.route('/recommend')

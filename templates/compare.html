@@ -2,57 +2,72 @@
 
 {% block content %}
 <style>
-    /* 局部样式覆盖，配合 style.css */
     .compare-header {
+        background: linear-gradient(135deg, #f9fbff 0%, #fff 100%);
+        border-radius: 14px;
+        padding: 26px 26px 18px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.04);
+    }
+
+    .up-card {
+        border-radius: 14px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
         background: #fff;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+    }
+    .up-card-blue { border: 1px solid rgba(0, 161, 214, 0.25); }
+    .up-card-pink { border: 1px solid rgba(251, 114, 153, 0.25); }
+
+    .up-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        object-fit: cover;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        border: 2px solid #fff;
     }
 
-    /* 极简的 VS 分隔符 */
-    .vs-divider {
-        color: #ddd;
-        font-size: 1.5rem;
-        font-weight: 300;
-        position: relative;
-        top: 5px;
+    .vs-badge {
+        width: 72px;
+        height: 72px;
+        line-height: 72px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00A1D6, #FB7299);
+        color: white;
+        font-weight: 800;
+        letter-spacing: 1px;
+        margin: 0 auto;
+        font-size: 1.2rem;
     }
 
-    /* 优化下拉框样式 */
     .custom-select {
         border: 2px solid transparent;
         background-color: var(--bg-gray);
-        border-radius: 8px;
-        font-weight: 600;
-        color: #333;
+        border-radius: 10px;
+        font-weight: 700;
+        color: #222;
         height: 50px;
         transition: all 0.3s;
         text-align: center;
         text-align-last: center;
     }
+    .select-blue:focus, .select-blue:hover { border-color: var(--tech-blue); box-shadow: 0 0 0 4px rgba(0, 161, 214, 0.1); background: #fff; }
+    .select-pink:focus, .select-pink:hover { border-color: var(--bili-pink); box-shadow: 0 0 0 4px rgba(251, 114, 153, 0.1); background: #fff; }
 
-    /* 选中时的边框色，对应 B 站蓝粉 */
-    .select-blue:focus, .select-blue:hover {
-        background-color: #fff;
-        border-color: var(--tech-blue);
-        box-shadow: 0 0 0 4px rgba(0, 161, 214, 0.1);
-    }
-    .select-pink:focus, .select-pink:hover {
-        background-color: #fff;
-        border-color: var(--bili-pink);
-        box-shadow: 0 0 0 4px rgba(251, 114, 153, 0.1);
-    }
+    .radar-title { font-size: 1.2rem; letter-spacing: 1px; font-weight: 800; }
+    .card-header-custom { font-size: 1.05rem; font-weight: 700; }
 
-    /* 图表卡片标题 */
-    .card-header-custom {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
+    .text-blue { color: var(--tech-blue); }
+    .text-pink { color: var(--bili-pink); }
+
+ codex/fix-spelling-error-and-code-issues-7j1q1q
+    .stats-table th { border-bottom: 1px dashed #e0e6ed; font-weight: 700; }
+    .stats-table td { border-top: none; padding: 9px 8px; }
+
+    .panel-card { border: 1px solid #f0f2f5; }
 
     .radar-title {
         font-size: 1.15rem;
@@ -68,142 +83,174 @@
     }
     .badge-blue { background: rgba(0, 161, 214, 0.1); color: var(--tech-blue); }
     .badge-pink { background: rgba(251, 114, 153, 0.1); color: var(--bili-pink); }
+ main
 
+    .primary-action {
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    }
+    .primary-action:hover { box-shadow: 0 12px 32px rgba(0,0,0,0.16); }
 </style>
 
-<!-- 顶部选择栏：极简、扁平 -->
 <div class="compare-header mb-4">
-    <div class="row align-items-center">
-        <!-- 蓝方 -->
-        <div class="col-md-5">
-            <div class="d-flex align-items-center">
-                <div class="me-3 d-none d-md-block text-end" style="width: 40px;">
-                    <i class="fas fa-user-astronaut fa-2x" style="color: var(--tech-blue);"></i>
+    <div class="row g-3 align-items-center">
+        <div class="col-lg-5">
+            <div class="up-card up-card-blue">
+                <img id="avatar1" class="up-avatar" src="{{ up_avatars.get(up_list[0]) if up_list else 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2296%22 height=%2296%22%3E%3Crect width=%2296%22 height=%2296%22 rx=%2216%22 ry=%2216%22 fill=%22%2300A1D6%22/%3E%3Ctext x=%2250%25%22 y=%2255%25%22 font-size=%2234%22 fill=%22white%22 text-anchor=%22middle%22 font-family=%22Arial%22%3EUP%3C/text%3E%3C/svg%3E' }}" alt="UP1 头像">
+                <div class="flex-grow-1">
+                    <div class="text-muted small mb-1">UP 主 A</div>
+                    <select id="select-up1" class="form-select custom-select select-blue text-center" onchange="updateNames()">
+                        {% for up in up_list %}<option value="{{up}}">{{up}}</option>{% endfor %}
+                    </select>
                 </div>
-                <select id="select-up1" class="form-select custom-select select-blue" onchange="updateNames()">
-                    {% for up in up_list %}<option value="{{up}}">{{up}}</option>{% endfor %}
-                </select>
-                <div class="ms-3 d-none d-md-block text-start" style="width: 40px;">
-                    <i class="fas fa-robot fa-2x" style="color: #6c757d;"></i>
-                </div>
+ codex/fix-spelling-error-and-code-issues-7j1q1q
             </div>
         </div>
 
-        <!-- 极简分隔 -->
-        <div class="col-md-2 text-center">
-            <i class="fas fa-exchange-alt text-muted opacity-50" style="font-size: 1.2rem;"></i>
+        <div class="col-lg-2 text-center">
+            <div class="vs-badge">VS</div>
+            <div class="text-muted small mt-2">强强对照</div>
         </div>
 
-        <!-- 红方 -->
-        <div class="col-md-5">
-            <div class="d-flex align-items-center justify-content-end">
-                <div class="me-3 d-none d-md-block text-end" style="width: 40px;">
-                    <i class="fas fa-user-ninja fa-2x" style="color: var(--bili-pink);"></i>
+ codex/fix-spelling-error-and-code-issues-7j1q1q
+        <div class="col-lg-5">
+            <div class="up-card up-card-pink justify-content-end">
+                <div class="flex-grow-1 text-end me-3">
+                    <div class="text-muted small mb-1">UP 主 B</div>
+                    <select id="select-up2" class="form-select custom-select select-pink text-center" onchange="updateNames()">
+                        {% for up in up_list %}<option value="{{up}}" {% if loop.index==2 %}selected{% endif %}>{{up}}</option>{% endfor %}
+                    </select>
                 </div>
-                <select id="select-up2" class="form-select custom-select select-pink" onchange="updateNames()">
-                    {% for up in up_list %}<option value="{{up}}" {% if loop.index==2 %}selected{% endif %}>{{up}}</option>{% endfor %}
-                </select>
-                <div class="ms-3 d-none d-md-block text-start" style="width: 40px;">
-                    <i class="fas fa-robot fa-2x" style="color: #6c757d;"></i>
-                </div>
+                <img id="avatar2" class="up-avatar" src="{{ up_avatars.get(up_list[1]) if up_list|length>1 else 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2296%22 height=%2296%22%3E%3Crect width=%2296%22 height=%2296%22 rx=%2216%22 ry=%2216%22 fill=%22%23FB7299%22/%3E%3Ctext x=%2250%25%22 y=%2255%25%22 font-size=%2234%22 fill=%22white%22 text-anchor=%22middle%22 font-family=%22Arial%22%3EUP%3C/text%3E%3C/svg%3E' }}" alt="UP2 头像">
             </div>
         </div>
     </div>
 
-    <!-- 居中分析按钮 -->
     <div class="text-center mt-3">
-        <button class="btn btn-dark rounded-pill px-5 shadow-sm hover-scale" onclick="startPK()">
-            <i class="fas fa-chart-line me-2"></i>生成对比报告
+        <button class="btn btn-dark btn-lg rounded-pill px-5 hover-scale primary-action" onclick="startPK()">
+            <i class="fas fa-bolt me-2"></i>生成对比报告
         </button>
     </div>
 </div>
 
-<!-- 数据展示区：左右 1:1 均分，让图表更大气 -->
 <div class="row g-4">
-
-    <!-- 左侧：五维雷达图 -->
     <div class="col-lg-6">
-        <div class="card h-100 p-4 shadow-sm">
-            <div class="text-center fw-bold radar-title mb-3"><i class="fas fa-radar-chart me-2 text-muted"></i>综合能力模型</div>
-            <div id="radarChart" style="height: 500px; width: 100%;"></div>
+ codex/fix-spelling-error-and-code-issues-7j1q1q
+        <div class="card h-100 p-4 shadow-sm panel-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <div class="radar-title">综合能力模型</div>
+                    <div class="text-muted small">线条加粗 + 透明填充，配合明细表</div>
+                </div>
+            </div>
+            <div id="radarChart" style="height: 360px; width: 100%;"></div>
+            <div class="mt-3">
+                <table class="table align-middle mb-0 stats-table">
+                    <thead>
+                        <tr>
+                            <th class="text-muted">维度</th>
+                            <th class="text-blue fw-bold" id="legend-name1">UP1</th>
+                            <th class="text-pink fw-bold" id="legend-name2">UP2</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>产出积累</td><td id="stat-prod" class="text-blue fw-bold">-</td><td id="stat-prod-2" class="text-pink fw-bold">-</td></tr>
+                        <tr><td>流量层级</td><td id="stat-pop" class="text-blue fw-bold">-</td><td id="stat-pop-2" class="text-pink fw-bold">-</td></tr>
+                        <tr><td>内容质量</td><td id="stat-qual" class="text-blue fw-bold">-</td><td id="stat-qual-2" class="text-pink fw-bold">-</td></tr>
+                        <tr><td>粉丝粘性</td><td id="stat-stick" class="text-blue fw-bold">-</td><td id="stat-stick-2" class="text-pink fw-bold">-</td></tr>
+                        <tr><td>硬核指数</td><td id="stat-hard" class="text-blue fw-bold">-</td><td id="stat-hard-2" class="text-pink fw-bold">-</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <!-- 右侧：词云画像 (上下布局) -->
     <div class="col-lg-6">
-        <div class="card h-100 shadow-sm border-0">
-            <div class="card-body p-0">
-                <!-- 上半部分：蓝方词云 -->
-                <div class="p-3 border-bottom" style="height: 50%;">
-                    <div class="d-flex justify-content-start align-items-center mb-2">
-                        <span class="badge-name badge-blue fw-bold" id="cloud-name1">UP1</span>
-                    </div>
-                    <div id="wordCloud1" style="height: 220px;"></div>
-                </div>
-
-                <!-- 下半部分：红方词云 -->
-                <div class="p-3" style="height: 50%;">
-                    <div class="d-flex justify-content-start align-items-center mb-2">
-                        <span class="badge-name badge-pink fw-bold" id="cloud-name2">UP2</span>
-                    </div>
-                    <div id="wordCloud2" style="height: 220px;"></div>
-                </div>
+ codex/fix-spelling-error-and-code-issues-7j1q1q
+        <div class="card h-100 p-4 shadow-sm panel-card">
+            <div class="d-flex justify-content-between align-items-center card-header-custom mb-3">
+                <div><i class="fas fa-chart-bar me-2 text-muted"></i>关键词对比</div>
+                <span class="badge bg-light text-muted">Top 5</span>
             </div>
+            <div id="keywordBar" style="height: 480px;"></div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/echarts-wordcloud.min.js') }}"></script>
 <script>
-let radarChart, wc1, wc2;
-const COLOR_BLUE = '#00A1D6'; // var(--tech-blue)
-const COLOR_PINK = '#FB7299'; // var(--bili-pink)
+let radarChart, keywordChart;
+const COLOR_BLUE = '#00A1D6';
+const COLOR_PINK = '#FB7299';
+const upAvatars = {{ up_avatars|tojson }};
 
-// 页面加载或下拉框变化时，更新页面上的文字标签
+const METRICS = [
+    {key: 'prod', label: '产出积累', index: 0},
+    {key: 'pop', label: '流量层级', index: 1},
+    {key: 'qual', label: '内容质量', index: 2},
+    {key: 'stick', label: '粉丝粘性', index: 3},
+    {key: 'hard', label: '硬核指数', index: 4}
+];
+
+function placeholderAvatar(name, color) {
+    const initials = (name || 'UP').slice(0, 2);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity="0.95"/><stop offset="100%" stop-color="#222" stop-opacity="0.75"/></linearGradient></defs>
+        <rect rx="20" ry="20" width="120" height="120" fill="url(#g)" />
+        <text x="50%" y="55%" font-family="Arial" font-size="42" fill="#fff" text-anchor="middle">${initials}</text>
+    </svg>`;
+    return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+}
+
+function getAvatar(name, color) {
+    if (name && upAvatars && upAvatars[name]) return upAvatars[name];
+    return placeholderAvatar(name, color);
+}
+
 function updateNames() {
     const n1 = $('#select-up1').val();
     const n2 = $('#select-up2').val();
-    $('#cloud-name1').text(n1);
-    $('#cloud-name2').text(n2);
+ codex/fix-spelling-error-and-code-issues-7j1q1q
+    $('#legend-name1').text(n1 || 'UP1');
+    $('#legend-name2').text(n2 || 'UP2');
+    $('#avatar1').attr('src', getAvatar(n1, COLOR_BLUE));
+    $('#avatar2').attr('src', getAvatar(n2, COLOR_PINK));
+
 }
 
 function startPK() {
     const up1 = $('#select-up1').val();
     const up2 = $('#select-up2').val();
-
-    // 确保标签同步
     updateNames();
 
-    // Loading 动画颜色区分
-    if(radarChart) radarChart.showLoading({color: '#333'});
-    if(wc1) wc1.showLoading({color: COLOR_BLUE});
-    if(wc2) wc2.showLoading({color: COLOR_PINK});
+    if (!radarChart) radarChart = echarts.init(document.getElementById('radarChart'));
+    if (!keywordChart) keywordChart = echarts.init(document.getElementById('keywordBar'));
+    radarChart.showLoading({color: '#666'});
+    keywordChart.showLoading({color: '#666'});
 
     $.get('/api/compare_data', {up1: up1, up2: up2}, function(res) {
+        radarChart.hideLoading();
+        keywordChart.hideLoading();
         renderRadar(up1, up2, res.up1_stats, res.up2_stats);
-        renderWordCloud('wordCloud1', res.up1_words, COLOR_BLUE);
-        renderWordCloud('wordCloud2', res.up2_words, COLOR_PINK);
+        renderStatsTable(res.up1_stats, res.up2_stats);
+        renderKeywordBar(up1, up2, res.up1_words, res.up2_words);
     });
 }
 
 function renderRadar(name1, name2, data1, data2) {
-    if (!radarChart) radarChart = echarts.init(document.getElementById('radarChart'));
-    radarChart.hideLoading();
-
     const option = {
         color: [COLOR_BLUE, COLOR_PINK],
         tooltip: { trigger: 'item' },
         legend: {
             bottom: '0%',
             icon: 'circle',
-            data: [name1, name2] // 动态图例
+            data: [name1, name2]
         },
         radar: {
-            // 调大半径，让图看起来更“大方”
-            radius: '70%',
-            center: ['50%', '50%'],
+            radius: '68%',
+            center: ['50%', '52%'],
             indicator: [
                 { name: '产出积累', max: 100 },
                 { name: '流量层级', max: 100 },
@@ -211,88 +258,97 @@ function renderRadar(name1, name2, data1, data2) {
                 { name: '粉丝粘性', max: 100 },
                 { name: '硬核指数', max: 100 }
             ],
-            axisName: {
-                color: '#666',
-                fontWeight: 'bold',
-                fontSize: 14 // 字体改大
-            },
-            splitArea: {
-                show: true,
-                areaStyle: {
-                    color: ['#fff', '#f8f9fa'] // 极淡的灰白交替
-                }
-            }
+            axisName: { color: '#555', fontWeight: 'bold', fontSize: 14 },
+            splitArea: { show: true, areaStyle: { color: ['#fff', '#f7f8fb'] } },
+            axisLine: { lineStyle: { color: '#e0e6ed' } },
+            splitLine: { lineStyle: { color: '#e0e6ed' } }
         },
         series: [{
             type: 'radar',
             symbol: 'circle',
-            symbolSize: 8,
-            lineStyle: { width: 3 },
+            symbolSize: 9,
+            lineStyle: { width: 4 },
+            areaStyle: { opacity: 0.14 },
             data: [
-                {
-                    value: data1,
-                    name: name1, // 对应 Legend
-                    areaStyle: { opacity: 0.25 }
-                },
-                {
-                    value: data2,
-                    name: name2, // 对应 Legend
-                    areaStyle: { opacity: 0.25 }
-                }
+                { value: data1, name: name1 },
+                { value: data2, name: name2 }
             ]
         }]
     };
     radarChart.setOption(option);
 }
 
-function renderWordCloud(elemId, data, themeColor) {
-    const chart = echarts.init(document.getElementById(elemId));
-    // 存储实例引用
-    if (elemId === 'wordCloud1') wc1 = chart; else wc2 = chart;
-    chart.hideLoading();
+function renderStatsTable(data1, data2) {
+    METRICS.forEach(m => {
+        const v1 = data1 ? data1[m.index] : '-';
+        const v2 = data2 ? data2[m.index] : '-';
+        $(`#stat-${m.key}`).text(v1);
+        $(`#stat-${m.key}-2`).text(v2);
+    });
+}
+
+function renderKeywordBar(name1, name2, words1 = [], words2 = []) {
+    const map1 = {};
+    const map2 = {};
+    words1.slice(0, 5).forEach(w => map1[w.name] = w.value);
+    words2.slice(0, 5).forEach(w => map2[w.name] = w.value);
+
+    const categories = Array.from(new Set([...Object.keys(map1), ...Object.keys(map2)]));
+    categories.sort((a, b) => Math.max(map1[b] || 0, map2[b] || 0) - Math.max(map1[a] || 0, map2[a] || 0));
+
+    const dataBlue = categories.map(c => map1[c] || 0);
+    const dataPink = categories.map(c => map2[c] || 0);
 
     const option = {
-        tooltip: { show: true },
-        series: [{
-            type: 'wordCloud',
-            shape: 'circle',
-            left: 'center', top: 'center',
-            width: '90%', height: '90%',
-            sizeRange: [14, 40], // 稍微调大最小字体
-            rotationRange: [-30, 30],
-            gridSize: 8,
-            layoutAnimation: true,
-            textStyle: {
-                fontFamily: 'sans-serif',
-                fontWeight: 'bold',
-                color: function () {
-                    // 同色系生成逻辑
-                    if (themeColor === COLOR_BLUE) {
-                        return `rgba(0, ${130 + Math.random() * 100}, ${200 + Math.random() * 55}, ${Math.random() * 0.6 + 0.4})`;
-                    } else {
-                        return `rgba(251, ${50 + Math.random() * 100}, ${100 + Math.random() * 100}, ${Math.random() * 0.6 + 0.4})`;
-                    }
+        color: [COLOR_BLUE, COLOR_PINK],
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'shadow' },
+            formatter: params => {
+                const items = params.map(p => `${p.marker} ${p.seriesName}: ${p.value}`);
+                return `${params[0].name}<br/>${items.join('<br/>')}`;
+            }
+        },
+        legend: { top: 0, data: [name1, name2] },
+        grid: { left: '6%', right: '6%', top: 40, bottom: 20, containLabel: true },
+        xAxis: { type: 'value', splitLine: { show: false } },
+        yAxis: {
+            type: 'category',
+            data: categories,
+            axisLabel: {
+                formatter: function (value) {
+                    return value.length > 8 ? value.slice(0, 8) + '…' : value;
                 }
+            }
+        },
+        series: [
+            {
+                name: name1,
+                type: 'bar',
+                data: dataBlue,
+                barWidth: 14,
+                itemStyle: { borderRadius: [6, 6, 6, 6] }
             },
-            emphasis: {
-                focus: 'self',
-                textStyle: { textShadowBlur: 8, textShadowColor: '#ddd' }
-            },
-            data: data
-        }]
+            {
+                name: name2,
+                type: 'bar',
+                data: dataPink,
+                barWidth: 14,
+                itemStyle: { borderRadius: [6, 6, 6, 6] }
+            }
+        ]
     };
-    chart.setOption(option);
+    keywordChart.setOption(option);
 }
 
 window.addEventListener('resize', function() {
-    if(radarChart) radarChart.resize();
-    if(wc1) wc1.resize();
-    if(wc2) wc2.resize();
+    if (radarChart) radarChart.resize();
+    if (keywordChart) keywordChart.resize();
 });
 
 $(document).ready(function() {
-    updateNames(); // 初始化名字
-    startPK();     // 初始化图表
+    updateNames();
+    startPK();
 });
 </script>
 {% endblock %}

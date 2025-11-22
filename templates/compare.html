@@ -55,7 +55,6 @@
     .stats-table td { border-top: none; padding: 9px 8px; }
 
     .panel-card { border: 1px solid #f0f2f5; }
-
     .primary-action {
         font-size: 1rem;
         letter-spacing: 0.5px;
@@ -81,7 +80,6 @@
             <div class="vs-text">VS</div>
             <div class="text-muted small">真实对照</div>
         </div>
-
         <div class="col-lg-5">
             <div class="up-card up-card-pink justify-content-end">
                 <div class="flex-grow-1 text-end me-3">
@@ -90,6 +88,7 @@
                         {% for up in up_list %}<option value="{{up}}" {% if loop.index==2 %}selected{% endif %}>{{up}}</option>{% endfor %}
                     </select>
                 </div>
+                <img id="avatar2" class="up-avatar" src="{{ up_avatars.get(up_list[1]) if up_list|length>1 else 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2296%22 height=%2296%22%3E%3Crect width=%2296%22 height=%2296%22 rx=%2216%22 ry=%2216%22 fill=%22%23FB7299%22/%3E%3Ctext x=%2250%25%22 y=%2255%25%22 font-size=%2234%22 fill=%22white%22 text-anchor=%22middle%22 font-family=%22Arial%22%3EUP%3C/text%3E%3C/svg%3E' }}" alt="UP2 头像">
             </div>
         </div>
     </div>
@@ -145,7 +144,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/echarts-wordcloud.min.js') }}"></script>
 <script>
 let radarChart, keywordChart;
 const COLOR_BLUE = '#00A1D6';
@@ -164,6 +162,7 @@ function updateNames() {
     const n2 = $('#select-up2').val();
     $('#legend-name1').text(n1 || 'UP1');
     $('#legend-name2').text(n2 || 'UP2');
+
 }
 
 function startPK() {
@@ -277,6 +276,7 @@ function formatMetric(metric) {
         return `${parseFloat(value).toFixed(2)}%`;
     }
     return `${value} ${unit}`;
+
 }
 
 window.addEventListener('resize', function() {

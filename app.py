@@ -83,9 +83,7 @@ def resources(): return render_template('resources.html', active='resources')
 def compare():
     ups = db.session.query(Video.up_name).distinct().all()
     up_list = [u[0] for u in ups]
-
     return render_template('compare.html', active='compare', up_list=up_list)
-
 
 @app.route('/recommend')
 @login_required

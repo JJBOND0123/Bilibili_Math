@@ -13,6 +13,7 @@ from io import BytesIO
 import jieba
 from PIL import Image
 from flask import Blueprint, Flask, render_template, jsonify, request, redirect, url_for, flash
+from flask import send_from_directory
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -29,6 +30,7 @@ app.config.from_object(Config)
 # ---- 全局配置与安全限制 ----
 UPLOAD_FOLDER = 'static/avatars'
 ALLOWED_AVATAR_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+DEFAULT_AVATAR_STATIC_PATH = 'img/default-avatar.svg'
 MAX_AVATAR_SIZE = 2 * 1024 * 1024  # 2 MB per avatar
 PASSWORD_HASH_METHOD = "pbkdf2:sha256:260000"
 PASSWORD_SALT_LENGTH = 8  # keep hash length within DB column limits
@@ -50,6 +52,7 @@ except Exception as exc:
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+login_manager.login_message = '✨ 请先登录，开启你的学习之旅'
 
 
 @login_manager.user_loader
@@ -57,7 +60,7 @@ def load_user(user_id):
     """Flask-Login 回调：根据 user_id 取出用户对象。"""
     return db.session.get(User, int(user_id))
 
-# ---- 爬虫任务管理（内存版，支持前端可视化进度）----
+# ---- 数据更新任务管理（内存版，支持前端可视化进度）----
 spider_bp = Blueprint("spider_api", __name__)
 tasks: dict[str, dict] = {}
 
@@ -97,7 +100,7 @@ def create_spider_task():
         "message": "",
         "logs": [],
         "result": [],
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(),
     }
     t = threading.Thread(target=run_spider_task, args=(task_id, params), daemon=True)
     t.start()
@@ -145,6 +148,16 @@ def cancel_spider_task(task_id: str):
 app.register_blueprint(spider_bp)
 
 
+@app.get("/favicon.ico")
+def favicon():
+    """避免浏览器请求 /favicon.ico 产生 404；复用默认 SVG 作为站点图标。"""
+    return send_from_directory(
+        os.path.join(app.root_path, "static", "img"),
+        "default-avatar.svg",
+        mimetype="image/svg+xml",
+    )
+
+
 def is_hashed_password(value: str) -> bool:
     """简单校验字符串是否看起来是 Werkzeug 生成的哈希（含多段 $）。"""
     return isinstance(value, str) and value.count("$") >= 2
@@ -165,11 +178,20 @@ def verify_password(stored: str, candidate: str) -> bool:
         return False
 
 
-def username_exists(username: str, exclude_user_id: int | None = None) -> bool:
-    """用户名查重，支持排除当前用户（更新资料时使用）。"""
-    if not username:
+def default_nickname(account: str) -> str:
+    """根据账号生成默认昵称，注册时使用，后续可在个人中心修改。"""
+    account = (account or '').strip()
+    if not account:
+        return '用户'
+    suffix = account[-4:] if len(account) >= 4 else account
+    return f'用户{suffix}'
+
+
+def account_exists(account: str, exclude_user_id: int | None = None) -> bool:
+    """账号查重：账号为唯一登录凭证。"""
+    if not account:
         return False
-    query = User.query.filter_by(username=username)
+    query = User.query.filter_by(account=account)
     if exclude_user_id:
         query = query.filter(User.id != exclude_user_id)
     return db.session.query(query.exists()).scalar()
@@ -225,9 +247,12 @@ def bump_history(user_id: int, bvid: str) -> None:
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
+        account = (request.form.get('account') or '').strip()
         password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
+        if not account or not password:
+            flash('请输入账号和密码', 'danger')
+            return render_template('login.html')
+        user = User.query.filter_by(account=account).first()
         if user:
             authenticated = False
             # 历史数据可能存明文；如果是明文且校验通过，会同步升级为哈希。
@@ -240,23 +265,24 @@ def login():
             if authenticated:
                 login_user(user)
                 return redirect(url_for('dashboard'))
-        flash('用户名或密码错误', 'danger')
+        flash('账号或密码错误', 'danger')
     return render_template('login.html')
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form.get('username')
+        account = (request.form.get('account') or '').strip()
         password = request.form.get('password')
-        if not username or not password:
-            flash('请输入用户名和密码', 'danger')
-        elif username_exists(username):
-            flash('用户名已存在', 'danger')
+        if not account or not password:
+            flash('请输入账号和密码', 'danger')
+        elif account_exists(account):
+            flash('账号已存在', 'danger')
         else:
             try:
                 new_user = User(
-                    username=username,
+                    account=account,
+                    username=default_nickname(account),
                     password=hash_password(password),
                     description='这个人很懒，还没有填写个人介绍',
                     avatar=''
@@ -267,7 +293,7 @@ def register():
                 return redirect(url_for('login'))
             except IntegrityError:
                 db.session.rollback()
-                flash('用户名已存在', 'danger')
+                flash('账号已存在或昵称冲突，请检查数据库迁移', 'danger')
     return render_template('register.html')
 
 
@@ -419,6 +445,46 @@ def get_hot_tags():
     return jsonify([tag for tag, count in Counter(all_tags).most_common(15)])
 
 
+@app.route('/api/category_tree')
+def get_category_tree():
+    """分类树：仅返回数据库中真实存在数据的 phase/subject（避免前端点进去空白）。"""
+    phases = db.session.query(
+        Video.phase,
+        func.count(Video.bvid).label('cnt'),
+    ).filter(
+        Video.phase != None,
+        Video.phase != '',
+    ).group_by(
+        Video.phase
+    ).order_by(
+        func.count(Video.bvid).desc()
+    ).all()
+
+    result = []
+    for phase, cnt in phases:
+        subs = db.session.query(
+            Video.subject,
+            func.count(Video.bvid).label('cnt'),
+        ).filter(
+            Video.phase == phase,
+            Video.subject != None,
+            Video.subject != '',
+        ).group_by(
+            Video.subject
+        ).order_by(
+            func.count(Video.bvid).desc()
+        ).all()
+        result.append(
+            {
+                "label": phase,
+                "count": int(cnt or 0),
+                "subs": [{"label": s, "count": int(c or 0)} for s, c in subs],
+            }
+        )
+
+    return jsonify({"phases": result})
+
+
 @app.route('/api/compare_data')
 def compare_data():
     """UP 主对比：聚合播放/收藏/互动等指标，归一化后输出雷达图与词云。"""
@@ -457,8 +523,7 @@ def compare_data():
         return round(min(score, 100), 1)
 
     # 预计算每个 UP 的原始指标，避免重复计算
-    from datetime import datetime
-    now_dt = datetime.utcnow()
+    now_dt = datetime.now()
     for s in summaries:
         video_count = s.video_count or 0
         total_views = s.total_views or 0
@@ -485,7 +550,6 @@ def compare_data():
             'total_interact': total_interact,
             'total_duration_hours': duration_hours,
         }
-
     # 评分归一化基准
     if stat_cache:
         max_views = max(c['views'] for c in stat_cache.values()) or 1
@@ -496,58 +560,91 @@ def compare_data():
     else:
         max_views = max_fav_rate = max_interact = max_depth = max_activity = 1
 
-    missing = [u for u in (up1, up2) if u not in stat_cache]
-    if missing:
-        return jsonify({'msg': "未找到 UP：" + ", ".join(missing)}), 404
+    def build_default(up_name: str):
+        empty_metrics = {
+            'view': {'value': 0, 'unit': '次播放'},
+            'rate': {'value': 0, 'unit': '%'},
+            'inter': {'value': 0, 'unit': '次/视频'},
+            'depth': {'value': 0, 'unit': '收藏/小时'},
+            'active': {'value': 0, 'unit': '视频/周'}
+        }
+        return {'radar': [0, 0, 0, 0, 0], 'metrics': empty_metrics, 'words': [{'name': up_name, 'value': 1}]}
 
     def get_up_data(up_name):
         summary = stat_cache.get(up_name)
         if not summary:
-            return {'radar': [0] * 5, 'metrics': {}, 'words': []}
+            return build_default(up_name)
 
-        total_views = summary['views']
-        fav_rate = summary['fav_rate']
-        inter_avg = summary['interact_avg']
-        depth_score = summary['depth_score']
-        activity = summary['activity']
-        video_count = summary['video_count']
-        total_fav = summary['fav']
-        total_interact = summary['total_interact']
+        total_views = summary['views'] or 0
+        fav_rate = summary['fav_rate'] or 0
+        inter_avg = summary['interact_avg'] or 0
+        depth_score = summary['depth_score'] or 0
+        activity = summary['activity'] or 0
+        total_fav = summary['fav'] or 0
+        total_interact = summary['total_interact'] or 0
 
-        # 构造雷达图数据（归一化到 0-100）
-        # 顺序：传播力, 质量(收藏率), 互动热度, 深度收藏, 创作活跃
+        videos = Video.query.filter_by(up_name=up_name).all()
+
+        # 计算AI干货度平均值
+        avg_dry_goods = sum(float(v.dry_goods_ratio or 0) for v in videos) / len(videos) if videos else 0
+
+        # 计算专业度：科目专注度 × 权威性
+        subject_counts = {}
+        for v in videos:
+            if v.subject and v.subject != '其他':
+                subject_counts[v.subject] = subject_counts.get(v.subject, 0) + 1
+
+        if subject_counts:
+            main_subject = max(subject_counts, key=subject_counts.get)
+            focus_ratio = subject_counts[main_subject] / len(videos)
+            subject_weights = {
+                '高等数学': 1.0, '数学分析': 1.0, '线性代数': 0.95,
+                '概率论': 0.9, '微积分': 0.85, '离散数学': 0.8
+            }
+            authority = subject_weights.get(main_subject, 0.7)
+            specialty_score = focus_ratio * authority * 100
+        else:
+            specialty_score = 0
+
+        # 计算知识密度：结合AI干货度和收藏效率
+        time_efficiency = float(total_fav) / (float(summary['total_duration_hours']) * 60) if summary['total_duration_hours'] > 0 else 0
+        efficiency_score = (avg_dry_goods * 0.6 + time_efficiency * 0.4)
+
+        # 计算互动指数：千次播放互动数
+        engagement_score = (total_interact / total_views * 1000) if total_views > 0 else 0
+
+        # 计算所有UP主的engagement_score最大值用于归一化
+        max_engagement = max((c['total_interact'] / c['views'] * 1000) if c['views'] > 0 else 0
+                            for c in stat_cache.values()) if stat_cache else 1
+
         stats = [
             normalize(total_views, max_views),
             normalize(fav_rate, max_fav_rate),
-            normalize(inter_avg, max_interact),
-            normalize(depth_score, max_depth),
-            normalize(activity, max_activity)
+            normalize(engagement_score, max_engagement),
+            min(efficiency_score, 100),
+            min(specialty_score, 100)
         ]
 
-        # 词云逻辑 (保持不变)
-        videos = Video.query.filter_by(up_name=up_name).all()
-        text = "".join([v.title + (v.tags or "") for v in videos])
+        text = "".join([f"{v.title or ''}{v.tags or ''}" for v in videos])
         stop_words = {'的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一', '一个', '上', '也', '很',
                       '到', '说', '去', '你', '会', '着', '没有', '看', '怎么', '视频', '高数', '数学', '考研',
                       '这一', '这个', '那个', '还是', '因为', '所以', '如果', '就是', '什么', '主要', '很多', '非常',
                       '大家'}
 
-        words = jieba.cut(text)
         valid_words = []
-        for w in words:
+        for w in jieba.cut(text):
             if len(w) > 1 and w not in stop_words and not w.isdigit():
                 valid_words.append(w)
 
         word_counts = Counter(valid_words).most_common(150)
         word_cloud_data = [{'name': k, 'value': v} for k, v in word_counts] or [{'name': up_name, 'value': 1}]
 
-        # 前端表格展示指标（Key 必须与前端一致）
         metrics = {
             'view': {'value': total_views, 'unit': '次播放'},
             'rate': {'value': fav_rate, 'unit': '%'},
-            'inter': {'value': round(inter_avg, 2), 'unit': '次/视频'},
-            'depth': {'value': round(depth_score, 2), 'unit': '收藏/小时'},
-            'active': {'value': round(activity, 2), 'unit': '视频/周'}
+            'inter': {'value': round(engagement_score, 2), 'unit': '‰'},
+            'depth': {'value': round(efficiency_score, 2), 'unit': '分'},
+            'active': {'value': round(specialty_score, 2), 'unit': '分'}
         }
 
         return {'radar': stats, 'metrics': metrics, 'words': word_cloud_data}
@@ -629,7 +726,11 @@ def api_recommend():
 def get_user_profile():
     """个人中心数据：返回收藏/待办/历史及头像/简介。"""
     user = current_user
-    avatar_url = f"/static/avatars/{user.avatar}" if user.avatar else "https://placehold.co/100x100/00A1D6/FFFFFF?text=User"
+    default_avatar = url_for('static', filename=DEFAULT_AVATAR_STATIC_PATH)
+    avatar_path = os.path.join(app.config['UPLOAD_FOLDER'], user.avatar) if user.avatar else None
+    has_avatar_file = avatar_path and os.path.exists(avatar_path)
+    avatar_url = url_for('static', filename='avatars/' + user.avatar) if has_avatar_file else default_avatar
+    nickname = user.username or default_nickname(user.account)
 
     # 1. 收藏
     fav_actions = UserAction.query.filter_by(user_id=user.id, action_type='fav').order_by(
@@ -656,7 +757,12 @@ def get_user_profile():
     todo_total = todo_pending + todo_done
 
     return jsonify({
-        'user_info': {'username': user.username, 'description': user.description, 'avatar': avatar_url},
+        'user_info': {
+            'username': nickname,
+            'account': user.account,
+            'description': user.description or '',
+            'avatar': avatar_url
+        },
         'favorites': fav_videos,
         'todos': todo_videos,
         'history': history_videos,  # 返回历史数据
@@ -717,10 +823,9 @@ def update_user_profile():
     user = current_user
     username = request.form.get('username')
     description = request.form.get('description')
-    if username and username != user.username:
-        if username_exists(username, exclude_user_id=user.id):
-            return jsonify({'msg': '用户名已存在', 'code': 400}), 400
-        user.username = username
+    if username is not None:
+        cleaned_name = username.strip()
+        user.username = cleaned_name or default_nickname(user.account)
     if description is not None:
         user.description = description
     if 'avatar' in request.files:
@@ -747,8 +852,24 @@ def update_user_profile():
             with open(os.path.join(app.config['UPLOAD_FOLDER'], filename), 'wb') as out:
                 out.write(buffer.read())
             user.avatar = filename
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'msg': '昵称保存失败，请确认数据库已移除昵称唯一约束', 'code': 400}), 400
     return jsonify({'msg': '更新成功', 'code': 200})
+
+
+@app.route('/api/delete_account', methods=['POST'])
+@login_required
+def delete_account():
+    """注销账号：删除用户所有数据。"""
+    user_id = current_user.id
+    UserAction.query.filter_by(user_id=user_id).delete()
+    User.query.filter_by(id=user_id).delete()
+    db.session.commit()
+    logout_user()
+    return jsonify({'msg': '账号已注销', 'code': 200})
 
 
 @app.route('/api/action', methods=['POST'])

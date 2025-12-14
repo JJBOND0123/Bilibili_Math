@@ -31,7 +31,7 @@
             <i class="fas fa-user-friends fa-fw"></i> 学术解剖
         </a>
         <a class="nav-link {% if active=='spider' %}active{% endif %}" href="/spider">
-            <i class="fas fa-bug fa-fw"></i> 爬虫任务
+            <i class="fas fa-sync-alt fa-fw"></i> 更新数据
         </a>
         <a class="nav-link {% if active=='recommend' %}active{% endif %}" href="/recommend">
             <i class="fas fa-lightbulb fa-fw"></i> 上岸捷径
@@ -67,14 +67,21 @@
         <div class="d-flex justify-content-end align-items-center" style="width: 200px;">
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    {% set display_name = current_user.username or current_user.account %}
+                    {% set desc = current_user.description or '' %}
                     <div class="text-end me-2 d-none d-lg-block">
-                        <div class="fw-bold topbar-username">{{ current_user.username }}</div>
-                        <div class="text-muted topbar-signature">{{ current_user.description[:10] }}</div>
+                        <div class="fw-bold topbar-username">{{ display_name }}</div>
+                        <div class="text-muted topbar-signature">{{ desc[:10] }}</div>
                     </div>
                     {% if current_user.avatar %}
-                        <img src="{{ url_for('static', filename='avatars/' + current_user.avatar) }}" class="rounded-circle border shadow-sm" width="42" height="42" style="object-fit: cover;">
+                        <img src="{{ url_for('static', filename='avatars/' + current_user.avatar) }}"
+                             class="rounded-circle border shadow-sm"
+                             width="42" height="42" style="object-fit: cover;"
+                             onerror="this.src='{{ url_for('static', filename='img/default-avatar.svg') }}'">
                     {% else %}
-                        <img src="https://placehold.co/40x40/00A1D6/FFFFFF?text={{ current_user.username[0]|upper }}" class="rounded-circle shadow-sm" width="42" height="42">
+                        <img src="{{ url_for('static', filename='img/default-avatar.svg') }}"
+                             class="rounded-circle shadow-sm border"
+                             width="42" height="42" style="object-fit: cover;">
                     {% endif %}
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2" aria-labelledby="userDropdown">

@@ -96,11 +96,11 @@
 
     let radarChart, keywordChart;
     const METRICS = [
-        {key: 'view',  label: '播放量',     formula: 'view_count 总和'},
-        {key: 'rate',  label: '收藏率',     formula: 'favorite_count ÷ view_count'},
-        {key: 'inter', label: '互动均值',   formula: '(弹幕数 + 评论数) ÷ 视频数 ÷ 2'},
-        {key: 'depth', label: '收藏/小时',  formula: '收藏数 ÷ 视频总时长(小时)'},
-        {key: 'active',label: '视频/周',    formula: '视频数 ÷ 发布天数 × 7'}
+        {key: 'view',  label: '影响力',    formula: '播放总量归一化'},
+        {key: 'rate',  label: '内容质量',  formula: '收藏率 × 100'},
+        {key: 'inter', label: '互动指数',  formula: '互动均值 = (弹幕+评论)/视频'},
+        {key: 'depth', label: '知识密度',  formula: '收藏深度 = 收藏 ÷ 时长(小时)'},
+        {key: 'active',label: '专业度',    formula: '创作活跃 = 视频/周'}
     ];
 
     $(document).ready(function() {
@@ -141,7 +141,6 @@
             tooltip: {
                 trigger: 'axis',
                 formatter: function (params) {
-                    // params[0] 是当前指针所在的维度
                     const p = params[0] || {};
                     const indicatorName = (p.indicator && p.indicator.name) || p.axisValue || p.name || '';
                     const idx = METRICS.findIndex(m => m.label === indicatorName);
@@ -165,13 +164,19 @@
                 symbolSize: 6,
                 lineStyle: { width: 2 },
                 areaStyle: { opacity: 0.2 },
+                emphasis: {
+                    lineStyle: { width: 4 },
+                    areaStyle: { opacity: 0.4 }
+                },
                 data: [
                     { value: data1, name: name1 },
                     { value: data2, name: name2 }
                 ]
-            }]
+            }],
+            animation: true,
+            animationDuration: 1000,
+            animationEasing: 'elasticOut'
         };
-        // 直接渲染，不搞花里胡哨的
         radarChart.setOption(option);
     }
 
@@ -186,29 +191,28 @@
             tooltip: { show: true },
             series: [{
                 type: 'wordCloud',
-
-                // ✅ 1. 回归经典圆形
                 shape: 'circle',
-
-                // 2. 居中显示
                 left: 'center', top: 'center',
                 width: '100%', height: '100%',
                 right: null, bottom: null,
-
-                // ✅ 3. 回归标准字号 (不再为了撑满而变大)
                 sizeRange: [12, 42],
-
-                // ✅ 4. 回归经典旋转角度 (轻微倾斜，更有设计感)
                 rotationRange: [-30, 30],
                 rotationStep: 1,
-
-                // ✅ 5. 回归标准间距 (有呼吸感)
                 gridSize: 10,
-
                 drawOutOfBound: false,
                 textStyle: { fontFamily: 'sans-serif', fontWeight: 'bold' },
+                emphasis: {
+                    focus: 'self',
+                    textStyle: {
+                        shadowBlur: 10,
+                        shadowColor: '#333'
+                    }
+                },
                 data: data
-            }]
+            }],
+            animation: true,
+            animationDuration: 1500,
+            animationEasing: 'cubicOut'
         });
     }
 
@@ -222,10 +226,10 @@
             tbody.append(`
                 <tr class="data-row">
                     <td class="data-cell cell-label">
-                        <div class="metric-label" title="公式：${m.formula}">${m.label}</div>
+                        <div class="metric-label" title="计算公式：${m.formula}">${m.label}</div>
                     </td>
-                    <td class="data-cell cell-val-blue">${v1}</td>
-                    <td class="data-cell cell-val-pink">${v2}</td>
+                    <td class="data-cell cell-val-blue" title="计算公式：${m.formula}">${v1}</td>
+                    <td class="data-cell cell-val-pink" title="计算公式：${m.formula}">${v2}</td>
                 </tr>
             `);
         });

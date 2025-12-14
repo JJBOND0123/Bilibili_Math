@@ -1,5 +1,7 @@
-# Bilibili 数学课代表
-面向大学生的数学学习聚合系统，汇集 B 站热门课程与刷题视频，提供数据可视化、个性化推荐和学习资产管理，帮助快速找到合适的老师、题库与复习路径。
+# 数学课代表
+> 毕业设计题目：《基于Python的B站高等数学教学资源分析与推荐系统》
+
+面向大学生的高等数学学习聚合系统，汇集 B 站热门课程与刷题视频，提供数据可视化、个性化推荐和学习资产管理，帮助快速找到合适的老师、题库与复习路径。
 
 ## 功能亮点
 - 数据仪表盘：总视频量、播放量、收藏率榜单、学科分布玫瑰图、时长-干货度散点。
@@ -25,7 +27,7 @@
 ```bash
 pip install -r requirements.txt
 ```
-3) 配置：直接修改代码默认值（`config.py`、`train_model.py`、`spider/bilibili_api.py`），更新数据库连接/SecretKey/Cookie；爬虫 Cookie 仅本地填写，勿提交仓库。
+3) 配置：直接修改 `config.py`（本项目暂不使用环境变量），设置数据库连接/SecretKey/Cookie；爬虫 Cookie 仅本地填写，勿提交仓库。
 4) 初始化数据库：`flask --app app run` 成功连接时会自动 `create_all()`；生产环境建议改用迁移工具。  
 5) 拉取示例数据（可选）：`python spider/bilibili_api.py`  
 6) 启动应用：
@@ -33,23 +35,43 @@ pip install -r requirements.txt
 flask --app app run --debug
 ```
 访问 `http://127.0.0.1:5000/`，在注册页创建账号后登录体验。  
-7) 训练分类模型（可选）：`python train_model.py`，依赖数据库中的 `videos` 标注数据。  
+7) 训练分类模型（可选）：见下方“模型训练说明（建议流程）”。  
 8) 运行测试（如添加后）：`pytest`
 
-## 模型训练说明
-- 预处理：jieba 分词，标题与标签拼接；过滤样本数 ≤5 的类别。
-- 模型：`TfidfVectorizer + ComplementNB` 管道，按 8:2 分层划分训练/测试集；输出 `classification_report` 并保存为 `subject_classifier.pkl`。
-- 作用：供爬虫在抓取时优先使用 ML 预测分类，置信度低再回退关键词规则。
+## 模型训练说明（建议流程）
+> 目标：把“科目/知识点分类”从纯规则，升级到“人工标注 + 可复训”的稳定流程。
+
+1) 导出待标注样本（生成 CSV 模板）：
+```bash
+python train_model.py --export-labels labels_to_fix.csv
+```
+2) 用 Excel 打开 `labels_to_fix.csv`，人工填写/修正 `subject_label` 列（保留 `bvid` 不变）。
+3) 用人工标注 CSV 训练并输出模型：
+```bash
+python train_model.py --labels-csv labels_to_fix.csv --output subject_classifier.pkl
+```
+4) 放在项目根目录后，爬虫会自动加载 `subject_classifier.pkl`；之后你只需要在“数据变多/标注更准”时再训练一次即可。
+
+说明：模型仍采用 `TfidfVectorizer + ComplementNB`，会输出 `classification_report` 方便你写进论文的实验部分。
+
+## 资源检索的二级目录优化（避免空白页面）
+- `resources` 页的一级/二级分类（phase/subject）改为从数据库动态生成，仅展示真实有数据的分类：后端接口 `/api/category_tree`，前端在页面加载时请求并渲染。
 
 ## 数据库表结构
 - 默认库：`bilibili_math_db`（如需调整请修改配置文件），推荐字符集 `utf8mb4`。
 - MySQL 建表语句（与 `models.py` 中的 SQLAlchemy 模型保持一致，可直接执行）：
 
+- 若你的 `videos` 表已存在，可执行 `docs/migrations/001_add_video_fields.sql` 追加新增字段（或在爬虫参数里设置 `auto_migrate=true` 自动补齐）。
+- Navicat 执行方式（推荐）：选中数据库 → 新建查询 → 粘贴 `docs/migrations/001_add_video_fields.sql` 全文 → 执行（脚本可重复执行，不会重复加列）。
+
 ```sql
 -- 采集到的课程/题解视频
 CREATE TABLE IF NOT EXISTS `videos` (
   `bvid` varchar(20) NOT NULL,
+  `aid` bigint,
+  `video_url` varchar(255),
   `title` varchar(255),
+  `desc` text,
   `up_name` varchar(100),
   `up_mid` bigint,
   `up_face` varchar(500),
@@ -58,24 +80,35 @@ CREATE TABLE IF NOT EXISTS `videos` (
   `danmaku_count` int,
   `reply_count` int,
   `favorite_count` int,
+  `like_count` int,
+  `coin_count` int,
+  `share_count` int,
   `duration` int,
   `pubdate` datetime,
   `tags` varchar(500),
+  `tag_names` varchar(1000),
+  `source_keyword` varchar(255),
+  `bili_tid` int,
+  `bili_tname` varchar(100),
   `category` varchar(50),
   `phase` varchar(50),
   `subject` varchar(50),
   `dry_goods_ratio` float,
+  `crawl_time` datetime,
   PRIMARY KEY (`bvid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 
 -- 登录用户信息
 CREATE TABLE IF NOT EXISTS `users` (
   `id` int NOT NULL AUTO_INCREMENT,
+  `account` varchar(50) NOT NULL,
   `username` varchar(50),
   `password` varchar(255),
   `description` varchar(255),
   `avatar` varchar(200),
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_users_account` (`account`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- 用户行为（收藏/待看/历史）
@@ -86,7 +119,8 @@ CREATE TABLE IF NOT EXISTS `user_actions` (
   `action_type` varchar(20),
   `status` int DEFAULT 0,
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_user_action` (`user_id`, `bvid`, `action_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 ```
 

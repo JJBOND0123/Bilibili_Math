@@ -173,51 +173,44 @@
     // 定义核心状态
     let state = { sort: 'dry_goods', category: 'all', page: 1, q: '', totalPages: 1 };
 
-    // ✅ 定义分类数据结构 (根据你的需求定制)
-    const categoryTree = {
-        'all': { label: '全部', subs: [] },
-        'college': {
-            label: '校内同步',
-            subs: ['全部', '高等数学', '线性代数', '概率论', '期末突击']
-        },
-        'exam': {
-            label: '升学备考',
-            subs: ['全部', '考研数学', '专升本', '真题实战', '张宇', '汤家凤', '武忠祥']
-        },
-        'pop': {
-            label: '直观科普',
-            subs: ['全部', '可视化', '数学史', '应用数学', '3Blue1Brown']
-        },
-        'advance': {
-            label: '高阶/竞赛',
-            subs: ['全部', '数学竞赛', '数学建模', '考研复试']
-        }
-    };
-
-    let currentParent = 'all'; // 当前选中的一级分类
+    // ✅ 分类树改为从数据库动态生成（避免点进去空白）
+    let phaseByKey = {}; // key -> {label, count, subs:[{label,count}]}
+    let currentParent = 'all';
 
     $(document).ready(function() {
         const urlParams = new URLSearchParams(window.location.search);
         const q = urlParams.get('q');
         if (q) { state.q = q; $('#global-search-input').val(q); }
 
-        // ✅ 初始化分类菜单
-        initCategories();
-
         loadHotTags();
-        fetchVideos();
+        loadCategoryTree();
     });
 
-    // ✅ 新版分类渲染逻辑
-    function initCategories() {
-        let parentContainer = $('#parent-category-list');
-        let html = '';
+    function loadCategoryTree() {
+        $.get('/api/category_tree')
+            .done(function(data) {
+                initCategories((data && data.phases) ? data.phases : []);
+                fetchVideos();
+            })
+            .fail(function() {
+                // 兜底：只展示“全部”，保证页面可用且不会出现空分类
+                initCategories([]);
+                fetchVideos();
+            });
+    }
 
-        // 渲染一级菜单
-        for (let key in categoryTree) {
-            let activeClass = (key === 'all') ? 'active' : '';
-            html += `<div class="filter-item ${activeClass}" onclick="selectParent('${key}', this)">${categoryTree[key].label}</div>`;
-        }
+    // ✅ 一级分类渲染：来自数据库真实 phase
+    function initCategories(phases) {
+        phaseByKey = {};
+        const parentContainer = $('#parent-category-list');
+        let html = `<div class="filter-item active" onclick="selectParent('all', this)">全部</div>`;
+
+        (phases || []).forEach((p, idx) => {
+            const key = `p_${idx}`;
+            phaseByKey[key] = p;
+            html += `<div class="filter-item" onclick="selectParent('${key}', this)">${p.label}</div>`;
+        });
+
         parentContainer.html(html);
     }
 
@@ -232,33 +225,36 @@
         // 2. 如果选的是"全部"，直接搜索并隐藏二级菜单
         if (key === 'all') {
             $('#sub-category-row').hide();
-            filterCat('all', null); // 触发搜索
+            state.category = 'all';
+            state.page = 1;
+            fetchVideos();
             return;
         }
 
-        // 3. 渲染二级菜单
-        let subs = categoryTree[key].subs;
-        let subContainer = $('#sub-category-list');
+        const phase = phaseByKey[key];
+        if (!phase) {
+            $('#sub-category-row').hide();
+            state.category = 'all';
+            state.page = 1;
+            fetchVideos();
+            return;
+        }
+
+        // 3. 渲染二级菜单（“全部” + 该 phase 下真实存在的 subject）
+        const subs = phase.subs || [];
+        const subContainer = $('#sub-category-list');
         let subHtml = '';
 
-        subs.forEach((sub, index) => {
-            // 默认选中第一个子项 (通常是"全部"或者该类的核心词)
-            let activeClass = (index === 0) ? 'active' : '';
-            // 如果是"全部"，传参时传一级分类的关键词，否则传具体子项
-            let searchKey = (sub === '全部') ? categoryTree[key].label : sub;
-            // 如果子项叫"全部"，搜索时我们通常用空或者一级分类名，这里假设后端能识别一级分类名，或者前端做处理
-            // 为了简单，如果点二级菜单的"全部"，我们就不传category，或者传一级菜单的label
-
-            subHtml += `<div class="filter-item ${activeClass}" onclick="filterCat('${sub}', this, '${key}')">${sub}</div>`;
+        subHtml += `<div class="filter-item active" onclick="filterCat('全部', this, '${key}')">全部</div>`;
+        subs.forEach((s) => {
+            subHtml += `<div class="filter-item" onclick="filterCat('${s.label}', this, '${key}')">${s.label}</div>`;
         });
 
         subContainer.html(subHtml);
         $('#sub-category-row').css('display', 'flex'); // 显示二级菜单
 
-        // 4. 自动触发一次该大类的搜索（默认搜大类标签，比如"校内同步"）
-        // 如果你想让用户必须点二级菜单才搜索，可以注释掉下面这行
-        state.category = categoryTree[key].label; // 比如搜索 "校内同步"
-        if(state.category === '校内同步') state.category = '高等数学'; // 修正：校内同步默认搜高数，体验更好
+        // 4. 默认先展示该 phase 的全部数据（不会为空）
+        state.category = phase.label;
         state.page = 1;
         fetchVideos();
     }
@@ -271,19 +267,15 @@
             $(btn).addClass('active');
         }
 
-        // 逻辑处理
         state.page = 1;
 
         if (c === 'all') {
-            state.category = 'all'; // 真正的全部
+            state.category = 'all';
         } else if (c === '全部') {
-            // 如果点击的是二级菜单里的"全部"，则搜索一级菜单的名字
-            // 例如：点击 "升学备考" -> "全部"，则搜索 "考研" (这里需要根据你的实际标签调整)
-            if (parentKey === 'exam') state.category = '考研';
-            else if (parentKey === 'college') state.category = '高等数学';
-            else state.category = categoryTree[parentKey].label;
+            const phase = phaseByKey[parentKey];
+            state.category = phase ? phase.label : 'all';
         } else {
-            state.category = c; // 搜索具体科目，如 "线性代数"
+            state.category = c;
         }
 
         fetchVideos();
@@ -324,7 +316,7 @@
         let html = '';
         videos.forEach(v => {
             let viewStr = formatCount(v.view_count);
-            let picUrl = v.pic_url || 'https://placehold.co/320x200/F6F7F8/9499A0?text=Cover';
+            let picUrl = v.pic_url || 'https://placehold.co/320x200/F6F7F8/9499A0?text=封面';
             let badgeText = v.category || formatDuration(v.duration);
             // ✅ 新增：日期格式化 (假设后端传的是 timestamp 或 字符串)
             let dateStr = formatDate(v.pubdate);
@@ -334,7 +326,7 @@
                 <div class="bili-card">
                     <div class="card-img-box">
                         <a href="/go/${v.bvid}" target="_blank">
-                            <img src="${picUrl}" referrerpolicy="no-referrer" onerror="this.src='https://placehold.co/320x200/F6F7F8/9499A0?text=Error'">
+                            <img src="${picUrl}" referrerpolicy="no-referrer" onerror="this.src='https://placehold.co/320x200/F6F7F8/9499A0?text=加载失败'">
                         </a>
                         <div class="duration-badge">${badgeText || 'HD'}</div>
                     </div>

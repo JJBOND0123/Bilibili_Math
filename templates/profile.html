@@ -47,7 +47,8 @@
 
     /* 数据统计 */
     .stats-row { display: flex; justify-content: space-around; margin-bottom: 24px; }
-    .stat-item { text-align: center; cursor: default; }
+    .stat-item { text-align: center; cursor: pointer; transition: all 0.2s; padding: 8px; border-radius: 8px; }
+    .stat-item:hover { background: #F6F7F8; transform: translateY(-2px); }
     .stat-num { font-size: 26px; font-weight: 800; font-family: 'DIN Alternate', sans-serif; line-height: 1.2; }
     .stat-label { font-size: 12px; color: var(--bili-gray); margin-top: 4px; }
 
@@ -180,37 +181,36 @@
 
 <div class="row g-4 mb-4">
     <!-- 个人信息 -->
-    <div class="col-md-4">
-        <div class="top-area-card">
-            <div class="user-compact">
-                <!-- ✅ 头像防裂图 -->
-                <img id="profile-avatar" src="" class="user-avatar" onerror="this.src='https://placehold.co/100x100/eee/999?text=User'">
-                <div class="user-info">
-                    <div class="user-name" id="user-name">...</div>
-                    <div class="user-sign text-truncate" id="user-desc">...</div>
-                    <button class="btn-edit-mini" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                        <i class="far fa-edit"></i> 编辑资料
-                    </button>
-                </div>
-            </div>
+    <div class="col-md-3">
+        <div class="top-area-card text-center">
+            <img id="profile-avatar" src="" class="user-avatar mx-auto mb-3" onerror="this.src='{{ url_for('static', filename='img/default-avatar.svg') }}'">
+            <div class="user-name" id="user-name">...</div>
+            <div class="user-sign mb-3" id="user-desc">...</div>
+            <button class="btn-edit-mini" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                <i class="far fa-edit"></i> 编辑资料
+            </button>
         </div>
     </div>
 
     <!-- 数据统计 -->
-    <div class="col-md-8">
+    <div class="col-md-9">
         <div class="top-area-card">
             <div class="stats-row">
-                <div class="stat-item">
+                <div class="stat-item" onclick="switchTab('todo-pane', document.querySelectorAll('.bili-tab-item')[0])" style="cursor:pointer;">
                     <div class="stat-num num-blue" id="stat-todo-total">-</div>
                     <div class="stat-label">待办清单</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item" onclick="switchTab('done-pane', document.querySelectorAll('.bili-tab-item')[1])" style="cursor:pointer;">
                     <div class="stat-num num-green" id="stat-todo-done">-</div>
                     <div class="stat-label">已完成</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item" onclick="switchTab('fav-pane', document.querySelectorAll('.bili-tab-item')[2])" style="cursor:pointer;">
                     <div class="stat-num num-pink" id="stat-fav-count">-</div>
                     <div class="stat-label">收藏视频</div>
+                </div>
+                <div class="stat-item" onclick="switchTab('history-pane', document.querySelectorAll('.bili-tab-item')[3])" style="cursor:pointer;">
+                    <div class="stat-num" style="color:#FF8C00;" id="stat-history-count">-</div>
+                    <div class="stat-label">学习足迹</div>
                 </div>
             </div>
 
@@ -252,31 +252,38 @@
 <!-- 编辑资料弹窗 -->
 <div class="modal fade" id="editProfileModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold">编辑资料</h5>
+        <div class="modal-content" style="border-radius:8px;">
+            <div class="modal-header" style="border-bottom:1px solid #e3e5e7;">
+                <h6 class="modal-title" style="font-size:16px; font-weight:600;">编辑资料</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body pt-4">
+            <div class="modal-body" style="padding:24px;">
                 <form id="editForm">
-                    <div class="mb-4 text-center">
+                    <div class="mb-3 text-center">
                         <label for="input-avatar" class="avatar-upload">
-                            <img id="preview-avatar" src="" onerror="this.src='https://placehold.co/100x100/eee/999?text=User'">
-                            <div class="change-avatar-text">点击更换头像</div>
+                            <img id="preview-avatar" src="" onerror="this.src='{{ url_for('static', filename='img/default-avatar.svg') }}'">
+                            <div class="change-avatar-text">更换头像</div>
                         </label>
                         <input type="file" class="d-none" id="input-avatar" accept="image/*" onchange="previewImage(this)">
                     </div>
                     <div class="mb-3">
-                        <input type="text" class="form-control" id="input-username" placeholder="昵称">
+                        <label class="form-label" style="font-size:14px; color:#61666d;">昵称</label>
+                        <input type="text" class="form-control" id="input-username" placeholder="请输入昵称" style="height:36px;">
                     </div>
                     <div class="mb-3">
-                        <textarea class="form-control" id="input-desc" rows="2" placeholder="写一句个性签名吧..."></textarea>
+                        <label class="form-label" style="font-size:14px; color:#61666d;">个性签名</label>
+                        <input type="text" class="form-control" id="input-desc" placeholder="欢迎新同学！！！" maxlength="100" style="height:36px;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size:14px; color:#61666d;">邮箱账号</label>
+                        <input type="email" class="form-control" id="input-account" readonly style="background:#f1f2f3; height:36px; color:#9499a0;">
                     </div>
                 </form>
             </div>
-            <div class="modal-footer border-0 pt-0">
+            <div class="modal-footer" style="border-top:1px solid #e3e5e7; padding:12px 24px;">
+                <button type="button" class="btn btn-sm" onclick="deleteAccount()" style="color:#fb7299; border:1px solid #fb7299; margin-right:auto;">注销账号</button>
                 <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="saveProfile()" style="background:var(--bili-blue); border:none;">保存</button>
+                <button type="button" class="btn btn-sm" onclick="saveProfile()" style="background:#00a1d6; border:none; color:#fff;">保存</button>
             </div>
         </div>
     </div>
@@ -307,6 +314,7 @@
         setTimeout(() => { $('#' + targetId).addClass('show active'); }, 50);
     }
 
+    const DEFAULT_AVATAR = "{{ url_for('static', filename='img/default-avatar.svg') }}";
     const DONE_SLICE = 12; // 默认展示的已完成条数
     let todoBvids = new Set();
     let fullDoneList = [];
@@ -323,11 +331,14 @@
             const totalCount = stats.total ?? (pendingCount + doneCount);
 
             // 更新头部
-            $('#user-name').text(info.username);
-            $('#user-desc').text(info.description || '这个人很懒，什么都没写~');
-            let avatar = info.avatar || 'https://placehold.co/100x100/eee/999?text=User';
+            const nickname = info.username || '未设置昵称';
+            $('#user-name').text(nickname);
+            $('#user-account').text(`账号：${info.account}`);
+            $('#user-desc').text(info.description || '欢迎新同学！！！');
+            let avatar = info.avatar || DEFAULT_AVATAR;
             $('#profile-avatar').attr('src', avatar);
             $('#preview-avatar').attr('src', avatar);
+            $('#input-account').val(info.account || '');
             $('#input-username').val(info.username);
             $('#input-desc').val(info.description);
 
@@ -335,6 +346,7 @@
             animateValue('stat-fav-count', 0, data.favorites.length, 800);
             animateValue('stat-todo-total', 0, pendingCount, 800);
             animateValue('stat-todo-done', 0, doneCount, 800);
+            animateValue('stat-history-count', 0, data.history.length, 800);
 
             // 更新进度条
             let percent = totalCount > 0 ? Math.round(doneCount / totalCount * 100) : 0;
@@ -400,7 +412,7 @@
 
         let html = '';
         displayList.forEach(v => {
-            let picUrl = v.pic_url || 'https://placehold.co/320x200/F6F7F8/9499A0?text=No+Img';
+            let picUrl = v.pic_url || 'https://placehold.co/320x200/F6F7F8/9499A0?text=无图片';
             let actionHtml = '';
 
             if (viewType === 'todo') {
@@ -436,7 +448,7 @@
                 <div class="video-card">
                     <div class="card-cover">
                         <a href="/go/${v.bvid}" target="_blank">
-                            <img src="${picUrl}" referrerpolicy="no-referrer" onerror="this.src='https://placehold.co/320x200/eee/999?text=Error'">
+                            <img src="${picUrl}" referrerpolicy="no-referrer" onerror="this.src='https://placehold.co/320x200/eee/999?text=加载失败'">
                         </a>
                     </div>
                     <div class="card-body">
@@ -540,6 +552,19 @@
     function showMoreDone() {
         if (!fullDoneList.length) return;
         renderGrid(fullDoneList, '#done-grid', 'done_all');
+    }
+
+    function deleteAccount() {
+        if(!confirm('确定要注销账号吗？此操作不可恢复！')) return;
+        if(!confirm('再次确认：注销后所有数据将被清空！')) return;
+
+        $.ajax({
+            url: '/api/delete_account', type: 'POST',
+            success: function() {
+                showToast('账号已注销');
+                setTimeout(() => { window.location.href = '/logout'; }, 1500);
+            }
+        });
     }
 
     $(document).ready(function() { loadProfile(); });

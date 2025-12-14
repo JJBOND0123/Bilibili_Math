@@ -1,4 +1,4 @@
-// 爬虫任务前端逻辑：提交任务、轮询进度、展示结果。
+// 数据更新任务前端逻辑：提交任务、轮询进度、展示结果。
 (function (window) {
   let currentTaskId = null;
   let pollTimer = null;
@@ -84,7 +84,7 @@
 
     const params = { max_pages: pages, save };
     if (keywords.length) {
-      params.tasks = keywords.map((k) => ({ q: k, keyword: k, phase: '', subject: '' }));
+      params.tasks = keywords.map((k) => ({ q: k, keyword: k, phase: '自定义', subject: '自定义' }));
     }
 
     disableForm(true);

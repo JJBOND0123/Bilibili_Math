@@ -125,7 +125,7 @@
 
             let html = '';
             data.forEach(function(v) {
-                let pic = v.pic_url || 'https://placehold.co/320x200/F6F7F8/9499A0?text=Cover';
+                let pic = v.pic_url || 'https://placehold.co/320x200/F6F7F8/9499A0?text=封面';
                 let view = formatCount(v.view_count);
 
                 // ⚡️ 接口容错逻辑
@@ -139,7 +139,7 @@
                     <div class="video-card">
                         <div class="card-cover">
                             <a href="/go/${v.bvid}" target="_blank">
-                                <img src="${pic}" referrerpolicy="no-referrer" onerror="this.src='https://placehold.co/320x200/eee/999?text=Error'">
+                                <img src="${pic}" referrerpolicy="no-referrer" onerror="this.src='https://placehold.co/320x200/eee/999?text=加载失败'">
                             </a>
                             <div class="duration">${badge || 'HD'}</div>
                         </div>
@@ -150,7 +150,7 @@
 
                             <div class="meta-row">
                                 <a href="${upLink}" ${target} class="up-link">
-                                    <img src="${upFace}" class="up-avatar" onerror="this.src='https://placehold.co/20x20/eee/999?text=U'">
+                                    <img src="${upFace}" class="up-avatar" referrerpolicy="no-referrer" onerror="this.src='https://placehold.co/20x20/eee/999?text=U'">
                                     <span class="text-truncate" style="max-width:70px;">${v.up_name}</span>
                                 </a>
                                 <div><i class="far fa-play-circle"></i> ${view}</div>

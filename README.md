@@ -61,8 +61,11 @@ python train_model.py --labels-csv labels_to_fix.csv --output subject_classifier
 - 默认库：`bilibili_math_db`（如需调整请修改配置文件），推荐字符集 `utf8mb4`。
 - MySQL 建表语句（与 `models.py` 中的 SQLAlchemy 模型保持一致，可直接执行）：
 
-- 若你的 `videos` 表已存在，可执行 `docs/migrations/001_add_video_fields.sql` 追加新增字段（或在爬虫参数里设置 `auto_migrate=true` 自动补齐）。
-- Navicat 执行方式（推荐）：选中数据库 → 新建查询 → 粘贴 `docs/migrations/001_add_video_fields.sql` 全文 → 执行（脚本可重复执行，不会重复加列）。
+- 本仓库提供一份数据库“转存 SQL”用于从零初始化：`docs/migrations/bilibili_math_db.sql`（包含建表与示例数据）。
+- Navicat 初始化方式（推荐）：新建空数据库 → 右键运行 SQL 文件 → 选择 `docs/migrations/bilibili_math_db.sql` 导入。
+- 若你已有旧库且不想重建：可通过爬虫的 `auto_migrate=true` 自动补齐缺失字段（仍建议先备份）。
+
+更多初始化与使用步骤见：`docs/初始化与运行指南.md`。
 
 ```sql
 -- 采集到的课程/题解视频

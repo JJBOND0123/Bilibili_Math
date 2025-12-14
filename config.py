@@ -11,4 +11,3 @@ class Config:
 
 # 本地开发/爬虫用：请在本机填写，不要提交真实 Cookie（示例：'SESSDATA=...; bili_jct=...;'）
 BILI_COOKIE = ""
-

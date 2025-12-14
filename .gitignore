@@ -1,1 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Environment / secrets (keep local)
+.env
+.env.*
+
+# IDEs
 .idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local uploads / generated assets
+static/avatars/*
+!static/avatars/.gitkeep
+
+# ML artifacts
+subject_classifier.pkl
+*.joblib
+
+# Logs
+*.log

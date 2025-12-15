@@ -29,3 +29,38 @@ def test_parse_time_seconds_and_ms():
     dt2 = parse_time(1700000000000)
     assert isinstance(dt1, datetime.datetime)
     assert isinstance(dt2, datetime.datetime)
+
+
+def test_normalize_from_detail_uses_search_typename_fallback():
+    from spider.bilibili_api import normalize_from_detail
+
+    detail = {
+        "bvid": "BV_FAKE",
+        "aid": 1,
+        "title": "t",
+        "desc": "",
+        "owner": {"name": "u", "mid": 2, "face": "f"},
+        "stat": {"view": 1, "favorite": 0},
+        "tid": 208,
+        "tname": "",
+        "duration": 1,
+        "pubdate": 1700000000,
+        "pic": "p",
+    }
+
+    out = normalize_from_detail(
+        detail,
+        fallback_title="t",
+        fallback_up_name="u",
+        fallback_up_mid=2,
+        fallback_up_face="f",
+        fallback_pic_url="p",
+        fallback_bili_tid=208,
+        fallback_bili_tname="校园学习",
+        source_keyword="k",
+        phase="ph",
+        subject="sub",
+    )
+
+    assert out["bili_tid"] == 208
+    assert out["bili_tname"] == "校园学习"

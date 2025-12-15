@@ -309,6 +309,8 @@ def normalize_from_detail(  # 定义函数：normalize_from_detail
     fallback_up_mid: int,  # 执行逻辑
     fallback_up_face: str,  # 执行逻辑
     fallback_pic_url: str,  # 执行逻辑
+    fallback_bili_tid: int = 0,  # 执行逻辑
+    fallback_bili_tname: str = "",  # 执行逻辑
     source_keyword: str,  # 执行逻辑
     phase: str,  # 执行逻辑
     subject: str,  # 执行逻辑
@@ -322,6 +324,13 @@ def normalize_from_detail(  # 定义函数：normalize_from_detail
     ratio = round((fav / view * 1000), 2) if view > 0 else 0  # 设置变量：ratio
 
     title = clean_html(detail.get("title") or fallback_title)  # 设置变量：title
+    detail_tname = (detail.get("tname") or "").strip()  # 设置变量：detail_tname
+    search_tname = (fallback_bili_tname or "").strip()  # 设置变量：search_tname
+    bili_tname = detail_tname or search_tname  # 设置变量：bili_tname
+
+    detail_tid = parse_count(detail.get("tid", 0))  # 设置变量：detail_tid
+    search_tid = parse_count(fallback_bili_tid or 0)  # 设置变量：search_tid
+    bili_tid = detail_tid or search_tid  # 设置变量：bili_tid
 
     return {  # 返回结果
         "bvid": bvid,  # 设置字典字段：bvid
@@ -345,8 +354,8 @@ def normalize_from_detail(  # 定义函数：normalize_from_detail
         "tags": "",  # 设置字典字段：tags
         "tag_names": "",  # 设置字典字段：tag_names
         "source_keyword": source_keyword,  # 设置字典字段：source_keyword
-        "bili_tid": parse_count(detail.get("tid", 0)),  # 设置字典字段：bili_tid
-        "bili_tname": (detail.get("tname") or "").strip(),  # 设置字典字段：bili_tname
+        "bili_tid": bili_tid,  # 设置字典字段：bili_tid
+        "bili_tname": bili_tname,  # 设置字典字段：bili_tname
         "category": "",  # 设置字典字段：category
         "phase": phase,  # 设置字典字段：phase
         "subject": "",  # 设置字典字段：subject
@@ -433,7 +442,13 @@ def save_to_mysql(data_list: Sequence[Dict[str, Any]], *, auto_migrate: bool = F
             placeholders = ", ".join(["%s"] * len(insert_cols))  # 设置变量：placeholders
             col_sql = ", ".join(f"`{c}`" for c in insert_cols)  # 设置变量：col_sql
             update_cols = [c for c in insert_cols if c != "bvid"]  # 执行逻辑
-            update_sql = ", ".join(f"`{c}`=VALUES(`{c}`)" for c in update_cols)  # 设置变量：update_sql
+            update_parts = []  # 设置变量：update_parts
+            for c in update_cols:  # 循环遍历
+                if c == "bili_tname":  # 条件判断
+                    update_parts.append(f"`{c}`=COALESCE(NULLIF(VALUES(`{c}`), ''), `{c}`)")  # 执行逻辑
+                else:  # 兜底分支
+                    update_parts.append(f"`{c}`=VALUES(`{c}`)")  # 执行逻辑
+            update_sql = ", ".join(update_parts)  # 设置变量：update_sql
 
             sql = f"""
             INSERT INTO `videos` ({col_sql})
@@ -545,6 +560,8 @@ def crawl(params=None, progress_cb=None, stop_flag=None):  # 定义函数：craw
                         detail = detail_cache.get(bvid) or {}  # 设置变量：detail
 
                     if detail:  # 条件判断
+                        fallback_bili_tid = parse_count(item.get("typeid", item.get("tid", 0)))  # 设置变量：fallback_bili_tid
+                        fallback_bili_tname = (item.get("typename") or item.get("tname") or "").strip()  # 设置变量：fallback_bili_tname
                         video_data = normalize_from_detail(  # 设置变量：video_data
                             detail,  # 执行逻辑
                             fallback_title=fallback_title,  # 设置变量：fallback_title
@@ -552,6 +569,8 @@ def crawl(params=None, progress_cb=None, stop_flag=None):  # 定义函数：craw
                             fallback_up_mid=fallback_up_mid,  # 设置变量：fallback_up_mid
                             fallback_up_face=fallback_up_face,  # 设置变量：fallback_up_face
                             fallback_pic_url=fallback_pic_url,  # 设置变量：fallback_pic_url
+                            fallback_bili_tid=fallback_bili_tid,  # 设置变量：fallback_bili_tid
+                            fallback_bili_tname=fallback_bili_tname,  # 设置变量：fallback_bili_tname
                             source_keyword=keyword,  # 设置变量：source_keyword
                             phase=phase,  # 设置变量：phase
                             subject=subject,  # 设置变量：subject
@@ -583,8 +602,8 @@ def crawl(params=None, progress_cb=None, stop_flag=None):  # 定义函数：craw
                             "tags": "",  # 设置字典字段：tags
                             "tag_names": "",  # 设置字典字段：tag_names
                             "source_keyword": keyword,  # 设置字典字段：source_keyword
-                            "bili_tid": 0,  # 设置字典字段：bili_tid
-                            "bili_tname": "",  # 设置字典字段：bili_tname
+                            "bili_tid": parse_count(item.get("typeid", item.get("tid", 0))),  # 设置字典字段：bili_tid
+                            "bili_tname": (item.get("typename") or item.get("tname") or "").strip(),  # 设置字典字段：bili_tname
                             "category": "",  # 设置字典字段：category
                             "phase": phase,  # 设置字典字段：phase
                             "subject": "",  # 设置字典字段：subject

@@ -424,9 +424,11 @@ def get_videos():
     # 4. 分页
     pagination = db.paginate(query, page=page, per_page=per_page, error_out=False)
     videos = pagination.items
+    payload_videos = [serialize_video(v) for v in videos]
+    attach_user_action_flags(payload_videos, [v.bvid for v in videos])
 
     return jsonify({
-        'videos': [serialize_video(v) for v in videos],
+        'videos': payload_videos,
         'total': pagination.total,
         'pages': pagination.pages,
         'current_page': page
@@ -718,7 +720,9 @@ def api_recommend():
 
     # 取前 8 个返回
     videos = query.limit(8).all()
-    return jsonify([serialize_video(v) for v in videos])
+    payload_videos = [serialize_video(v) for v in videos]
+    attach_user_action_flags(payload_videos, [v.bvid for v in videos])
+    return jsonify(payload_videos)
 
 
 @app.route('/api/user_profile')
@@ -945,6 +949,35 @@ def serialize_video(v):
         'link': f"https://www.bilibili.com/video/{v.bvid}",
         'up_space': f"https://space.bilibili.com/{up_mid}" if up_mid else None
     }
+
+
+def attach_user_action_flags(videos: list[dict], bvids: list[str]) -> None:
+    """Attach current user's fav/todo flags to video dicts."""
+    if not current_user.is_authenticated:
+        return
+    if not videos or not bvids:
+        return
+
+    actions = UserAction.query.filter(
+        UserAction.user_id == current_user.id,
+        UserAction.bvid.in_(bvids),
+        UserAction.action_type.in_(("fav", "todo")),
+    ).all()
+
+    by_bvid: dict[str, dict] = {}
+    for action in actions:
+        rec = by_bvid.setdefault(action.bvid, {})
+        if action.action_type == "fav":
+            rec["is_fav"] = True
+        elif action.action_type == "todo":
+            rec["is_todo"] = True
+            rec["todo_status"] = int(action.status or 0)
+
+    for video in videos:
+        rec = by_bvid.get(video.get("bvid"), {})
+        video["is_fav"] = bool(rec.get("is_fav"))
+        video["is_todo"] = bool(rec.get("is_todo"))
+        video["todo_status"] = int(rec.get("todo_status", 0))
 
 if __name__ == '__main__':
     with app.app_context():

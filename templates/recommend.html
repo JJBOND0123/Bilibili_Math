@@ -127,6 +127,8 @@
             data.forEach(function(v) {
                 let pic = v.pic_url || 'https://placehold.co/320x200/F6F7F8/9499A0?text=封面';
                 let view = formatCount(v.view_count);
+                let favActive = v.is_fav ? 'active' : '';
+                let todoActive = v.is_todo ? 'active' : '';
 
                 // ⚡️ 接口容错逻辑
                 let upFace = v.up_face || `https://placehold.co/50x50/E3E5E7/999?text=${v.up_name.charAt(0)}`;
@@ -157,10 +159,10 @@
                             </div>
 
                             <div class="action-bar">
-                                <div class="btn-mini" onclick="doAction('${v.bvid}', 'fav', this)">
+                                <div class="btn-mini ${favActive}" onclick="doAction('${v.bvid}', 'fav', this)">
                                     <i class="far fa-heart"></i> 收藏
                                 </div>
-                                <div class="btn-mini" onclick="doAction('${v.bvid}', 'todo', this)">
+                                <div class="btn-mini ${todoActive}" onclick="doAction('${v.bvid}', 'todo', this)">
                                     <i class="fas fa-plus"></i> 待办
                                 </div>
                             </div>

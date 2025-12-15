@@ -95,14 +95,59 @@
     .card-meta { margin-top: auto; display: flex; flex-direction: column; gap: 4px; }
 
     /* 第一行：UP主 */
-    .meta-row-up { display: flex; align-items: center; font-size: 12px; color: var(--bili-text-gray); }
-    .meta-row-up i { margin-right: 6px; font-size: 13px; }
+    .meta-row-up {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--bili-text-gray);
+        text-decoration: none;
+    }
+    .meta-row-up:hover { color: var(--bili-blue); }
+    .meta-row-up .up-avatar {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex: 0 0 auto;
+        background: #E3E5E7;
+    }
     .meta-row-up span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90%; }
 
     /* 第二行：数据 + 日期 */
     .meta-row-stat { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: #999; }
     .meta-left { display: flex; align-items: center; }
     .meta-left i { margin-right: 4px; }
+
+    /* 卡片底部操作 */
+    .card-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .card-action-btn {
+        flex: 1;
+        border: 1px solid #E3E5E7;
+        background: #F6F7F8;
+        color: #61666D;
+        font-size: 12px;
+        padding: 6px 0;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+    .card-action-btn:hover { background: #E3F5FF; border-color: #CBEAFF; color: var(--bili-blue); }
+    .card-action-btn.active { background: var(--bili-pink); border-color: var(--bili-pink); color: #fff; }
+
+    /* Toast */
+    .toast-container { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 9999; pointer-events: none; }
+    .custom-toast {
+        background: rgba(0,0,0,0.8); color: #fff; padding: 8px 16px; border-radius: 8px;
+        opacity: 0; transform: translateY(-12px); transition: 0.25s;
+        font-size: 13px; line-height: 1.2;
+    }
+    .custom-toast.show { opacity: 1; transform: translateY(0); }
 
     /* 4. 分页器 (完全保留原样) */
     .bili-pager { gap: 6px; }
@@ -118,6 +163,8 @@
     .bili-pager .page-item.disabled .page-link { background-color: transparent; border: none; color: #ccc; pointer-events: none; }
     .bili-pager .page-item.disabled.nav-btn .page-link { border: 1px solid #eee; background-color: #fcfcfc; }
 </style>
+
+<div class="toast-container" id="toastContainer"></div>
 
 <!-- 1. 筛选区 -->
 <div class="filter-container">
@@ -339,10 +386,10 @@
                         <!-- ✅ 布局调整：分两行显示信息 -->
                         <div class="card-meta">
                             <!-- 第一行：UP主 -->
-                            <div class="meta-row-up" title="${v.up_name}">
-                                <i class="fas fa-user-alt"></i>
+                            <a class="meta-row-up" title="${v.up_name}" href="${v.up_space || 'javascript:void(0)'}" ${v.up_space ? 'target=\"_blank\"' : ''}>
+                                <img class="up-avatar" src="${v.up_face || `https://placehold.co/50x50/E3E5E7/999?text=${(v.up_name || 'U').charAt(0)}`}" referrerpolicy="no-referrer" onerror="this.src='https://placehold.co/50x50/E3E5E7/999?text=U'">
                                 <span>${v.up_name}</span>
-                            </div>
+                            </a>
                             <!-- 第二行：播放量 + 日期 -->
                             <div class="meta-row-stat">
                                 <div class="meta-left">
@@ -354,11 +401,45 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="card-actions">
+                            <button class="card-action-btn ${v.is_fav ? 'active' : ''}" onclick="toggleAction('${v.bvid}', 'fav', this, event)">
+                                <i class="far fa-heart"></i> 收藏
+                            </button>
+                            <button class="card-action-btn ${v.is_todo ? 'active' : ''}" onclick="toggleAction('${v.bvid}', 'todo', this, event)">
+                                <i class="fas fa-plus"></i> 待办
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>`;
         });
         $('#video-grid').html(html);
+    }
+
+    function showToast(msg) {
+        const toast = $(`<div class="custom-toast"><i class="fas fa-check-circle" style="color:#2AC864; margin-right:6px;"></i>${msg}</div>`);
+        $('#toastContainer').append(toast);
+        setTimeout(() => toast.addClass('show'), 10);
+        setTimeout(() => { toast.removeClass('show'); setTimeout(() => toast.remove(), 260); }, 1800);
+    }
+
+    function toggleAction(bvid, type, btn, evt) {
+        if (evt) { evt.preventDefault(); evt.stopPropagation(); }
+        let $btn = $(btn);
+        let isActive = $btn.hasClass('active');
+        let url = isActive ? '/api/remove_action' : '/api/action';
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({bvid: bvid, type: type}),
+            success: function() {
+                $btn.toggleClass('active');
+                showToast(isActive ? '已取消' : '操作成功');
+            }
+        });
     }
 
     // 分页逻辑 (完全保留你原本的，不做任何修改)

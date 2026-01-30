@@ -35,6 +35,7 @@ subject_classifier.pkl
 *.log
 
 # Local UI screenshots (debug)
+docs/screenshots/
 dashboard_*.png
 recommend_*.png
 profile_optimized.png
@@ -42,5 +43,6 @@ resources_optimized.png
 
 # Codex/agent metadata
 .agent/
+.codex/
 .serena/
 .shared/

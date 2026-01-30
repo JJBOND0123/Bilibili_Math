@@ -620,17 +620,6 @@ def api_difficulties():
     return jsonify({"difficulties": difficulties})
 
 
-@api_bp.get("/uploaders")
-def api_uploaders():
-    """UP 主统计（视频数、平均评分）。"""
-    from core import RecommendEngine
-
-    engine = RecommendEngine(db, Video, VideoEnrichment)
-    top_n = request.args.get("top_n", 20, type=int)
-    uploaders = engine.get_uploader_stats(top_n=top_n)
-    return jsonify({"uploaders": uploaders})
-
-
 @api_bp.get("/roadmap")
 def api_roadmap():
     """学习路线占位接口。"""

@@ -287,30 +287,3 @@ class RecommendEngine:
             .all()
         )
         return [{"difficulty": row[0], "count": row[1]} for row in result]
-
-    def get_uploader_stats(self, top_n: int = 20) -> List[Dict]:
-        """获取 UP 主统计（视频数、平均评分）"""
-        if self.Enrichment is None:
-            return []
-
-        result = (
-            self.db.session.query(
-                self.Video.UP主名称,
-                func.count(self.Video.视频ID).label("video_count"),
-                func.avg(self.Enrichment.质量分).label("avg_score"),
-            )
-            .outerjoin(self.Enrichment, self.Enrichment.视频ID == self.Video.视频ID)
-            .filter(self.Video.UP主名称.isnot(None), self.Video.UP主名称 != "")
-            .group_by(self.Video.UP主名称)
-            .order_by(desc("video_count"))
-            .limit(top_n)
-            .all()
-        )
-        return [
-            {
-                "up_name": row[0],
-                "video_count": row[1],
-                "avg_score": round(row[2] or 0, 2),
-            }
-            for row in result
-        ]

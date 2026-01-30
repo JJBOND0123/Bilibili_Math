@@ -1,132 +1,33 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>注册 - 数学课代表</title>
-    <link href="{{ url_for('static', filename='css/all.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
-    <style>
-        :root { --bili-blue: #00AEEC; --bg-color: #F6F7F8; }
-        body {
-            background-color: var(--bg-color);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        }
-        .auth-card {
-            display: flex;
-            flex-direction: row-reverse;
-            width: 880px;
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
-        }
-        .auth-sidebar {
-            flex: 1;
-            background: linear-gradient(135deg, var(--bili-blue) 0%, #4BC2F1 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            position: relative;
-            padding: 30px;
-            text-align: center;
-        }
-        .brand-icon { font-size: 70px; margin-bottom: 20px; color: rgba(255,255,255,0.9); }
-        .auth-form-box {
-            flex: 1.2;
-            padding: 50px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .form-title { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 30px; text-align: center; }
-        .input-group-custom { position: relative; margin-bottom: 18px; }
-        .input-icon {
-            position: absolute; top: 50%; left: 15px; transform: translateY(-50%);
-            color: #ccc; transition: 0.3s; z-index: 2;
-        }
-        .form-control-custom {
-            width: 100%;
-            padding: 12px 15px 12px 45px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            background: #f9f9f9;
-            transition: all 0.3s;
-        }
-        .form-control-custom:focus {
-            background: #fff;
-            border-color: var(--bili-blue);
-            box-shadow: 0 0 0 4px rgba(0, 174, 236, 0.1);
-            outline: none;
-        }
-        .input-group-custom:focus-within .input-icon { color: var(--bili-blue); }
-        .btn-register {
-            width: 100%;
-            padding: 12px;
-            background: var(--bili-blue);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 10px rgba(0, 174, 236, 0.3);
-            margin-top: 4px;
-        }
-        .btn-register:hover {
-            background: #00a1d6;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0, 174, 236, 0.4);
-        }
-        .auth-footer { text-align: center; margin-top: 16px; font-size: 13px; color: #666; }
-        .auth-link { color: #FB7299; text-decoration: none; font-weight: 500; transition: 0.2s; }
-        .auth-link:hover { color: #ff5c7c; text-decoration: underline; }
-        @media (max-width: 768px) {
-            .auth-card { width: 92%; flex-direction: column; }
-            .auth-sidebar { display: none; }
-            .auth-form-box { padding: 40px 30px; }
-        }
-    </style>
-</head>
-<body>
-    <div class="auth-card">
-        <div class="auth-sidebar">
-            <div class="brand-icon"><i class="fas fa-rocket"></i></div>
-            <h4 class="fw-bold">加入我们</h4>
-            <p class="mt-2 opacity-75" style="font-size:14px;">开启你的高数/线代/概率学习旅程</p>
-        </div>
-        <div class="auth-form-box">
-            <div class="form-title">创建账号</div>
-            {% with messages = get_flashed_messages(with_categories=True) %}
-                {% if messages %}
-                    <div class="alert alert-{{ messages[0][0] if messages[0][0] else 'warning' }} text-center border-0 shadow-sm rounded-3 mb-3" style="font-size:14px;">
-                        {{ messages[0][1] }}
-                    </div>
-                {% endif %}
-            {% endwith %}
-            <form method="POST">
-                <div class="input-group-custom">
-                    <i class="fas fa-id-card input-icon"></i>
-                    <input type="text" name="account" class="form-control-custom" placeholder="设置账号（登录唯一标识）" required autocomplete="username">
-                </div>
-                <div class="input-group-custom">
-                    <i class="fas fa-lock input-icon"></i>
-                    <input type="password" name="password" class="form-control-custom" placeholder="设置密码" required autocomplete="new-password">
-                </div>
-                <button type="submit" class="btn-register">立即注册</button>
-            </form>
-            <div class="auth-footer">
-                已有账号？ <a href="/login" class="auth-link">直接登录</a>
-            </div>
-        </div>
+{% extends "auth_base.html" %}
+{% set variant = "blue" %}
+
+{% block title %}注册{% endblock %}
+
+{% block sidebar_icon %}<i class="fas fa-rocket"></i>{% endblock %}
+{% block brand_title %}加入我们{% endblock %}
+{% block brand_subtitle %}开启你的高数/线代/概率学习旅程{% endblock %}
+
+{% block form_title %}创建账号{% endblock %}
+
+{% block form %}
+<form method="POST">
+    <div class="input-group-custom">
+        <label for="register-account" class="visually-hidden">账号</label>
+        <i class="fas fa-id-card input-icon"></i>
+        <input id="register-account" type="text" name="account" class="form-control-custom"
+            placeholder="设置账号（登录唯一标识）" required autocomplete="username">
     </div>
-</body>
-</html>
+    <div class="input-group-custom">
+        <label for="register-password" class="visually-hidden">密码</label>
+        <i class="fas fa-lock input-icon"></i>
+        <input id="register-password" type="password" name="password" class="form-control-custom" placeholder="设置密码"
+            required autocomplete="new-password">
+    </div>
+    <button type="submit" class="btn-auth">立即注册</button>
+</form>
+{% endblock %}
+
+{% block footer %}
+已有账号？ <a href="/login" class="auth-link">直接登录</a>
+{% endblock %}
+

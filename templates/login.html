@@ -1,157 +1,33 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - 数学课代表</title>
-    <link href="{{ url_for('static', filename='css/all.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
-    <style>
-        :root {
-            --bili-pink: #FB7299;
-            --bili-blue: #00AEEC;
-            --bili-gray: #999;
-            --bg-color: #F6F7F8;
-        }
-        body {
-            background: radial-gradient(circle at 20% 20%, rgba(251,114,153,0.16), transparent 35%),
-                        radial-gradient(circle at 80% 0%, rgba(0,174,236,0.18), transparent 32%),
-                        linear-gradient(180deg, #fdfdff 0%, #f6f7f8 100%);
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        }
-        .auth-card {
-            display: flex;
-            width: 820px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-        }
-        .auth-sidebar {
-            flex: 1;
-            background: linear-gradient(135deg, var(--bili-pink) 0%, #FF8EB3 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            padding: 40px;
-            position: relative;
-            overflow: hidden;
-        }
-        .auth-sidebar::before {
-            content: '';
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
-            top: -50%;
-            left: -50%;
-        }
-        .brand-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-            animation: float 3s ease-in-out infinite;
-        }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        .auth-form-box {
-            flex: 1.2;
-            padding: 50px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .form-title { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 24px; text-align: center; }
-        .input-group-custom { position: relative; margin-bottom: 20px; }
-        .input-icon {
-            position: absolute;
-            top: 50%;
-            left: 15px;
-            transform: translateY(-50%);
-            color: #ccc;
-            transition: 0.3s;
-            z-index: 2;
-        }
-        .form-control-custom {
-            width: 100%;
-            padding: 12px 15px 12px 45px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.3s;
-            background: #f9f9f9;
-        }
-        .form-control-custom:focus {
-            background: #fff;
-            border-color: var(--bili-pink);
-            box-shadow: 0 0 0 4px rgba(251, 114, 153, 0.1);
-            outline: none;
-        }
-        .input-group-custom:focus-within .input-icon { color: var(--bili-pink); }
-        .btn-bili {
-            width: 100%;
-            padding: 12px;
-            background: var(--bili-pink);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 10px rgba(251, 114, 153, 0.3);
-        }
-        .btn-bili:hover {
-            background: #ff85ad;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(251, 114, 153, 0.4);
-        }
-        .auth-footer { text-align: center; margin-top: 18px; font-size: 13px; color: #666; }
-        .auth-link { color: var(--bili-blue); text-decoration: none; font-weight: 500; transition: 0.2s; }
-        .auth-link:hover { text-decoration: underline; }
-        @media (max-width: 768px) {
-            .auth-card { width: 92%; flex-direction: column; }
-            .auth-sidebar { display: none; }
-            .auth-form-box { padding: 40px 30px; }
-        }
-    </style>
-</head>
-<body>
-    <div class="auth-card">
-        <div class="auth-sidebar">
-            <div class="brand-icon"><i class="fas fa-tv"></i></div>
-            <h3 class="fw-bold">数学课代表</h3>
-            <p class="mt-2 opacity-75">高效 · 硬核 · 极速上岸</p>
-        </div>
-        <div class="auth-form-box">
-            <div class="form-title">欢迎回来</div>
-            {% with messages = get_flashed_messages(with_categories=True) %}
-                {% if messages %}
-                    <div class="alert alert-{{ messages[0][0] if messages[0][0] else 'warning' }} text-center border-0 shadow-sm rounded-3 mb-3" style="font-size:14px;">
-                        {{ messages[0][1] }}
-                    </div>
-                {% endif %}
-            {% endwith %}
-            <form method="POST">
-                <div class="input-group-custom">
-                    <i class="fas fa-user input-icon"></i>
-                    <input type="text" name="account" class="form-control-custom" placeholder="请输入账号" required autocomplete="username">
-                </div>
-                <div class="input-group-custom">
-                    <i class="fas fa-lock input-icon"></i>
-                    <input type="password" name="password" class="form-control-custom" placeholder="请输入密码" required autocomplete="current-password">
-                </div>
-                <button type="submit" class="btn-bili">登录</button>
-            </form>
-            <div class="auth-footer">
-                还没有账号？ <a href="/register" class="auth-link">立即注册</a>
-            </div>
-        </div>
+{% extends "auth_base.html" %}
+{% set variant = "pink" %}
+
+{% block title %}登录{% endblock %}
+
+{% block sidebar_icon %}<i class="fas fa-tv"></i>{% endblock %}
+{% block brand_title %}数学课代表{% endblock %}
+{% block brand_subtitle %}高效 · 硬核 · 极速上岸{% endblock %}
+
+{% block form_title %}欢迎回来{% endblock %}
+
+{% block form %}
+<form method="POST">
+    <div class="input-group-custom">
+        <label for="login-account" class="visually-hidden">账号</label>
+        <i class="fas fa-user input-icon"></i>
+        <input id="login-account" type="text" name="account" class="form-control-custom" placeholder="请输入账号" required
+            autocomplete="username">
     </div>
-</body>
-</html>
+    <div class="input-group-custom">
+        <label for="login-password" class="visually-hidden">密码</label>
+        <i class="fas fa-lock input-icon"></i>
+        <input id="login-password" type="password" name="password" class="form-control-custom" placeholder="请输入密码" required
+            autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn-auth">登录</button>
+</form>
+{% endblock %}
+
+{% block footer %}
+还没有账号？ <a href="/register" class="auth-link">立即注册</a>
+{% endblock %}
+

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,104 +8,111 @@
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/all.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    {% block head %}{% endblock %}
 
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/echarts.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 </head>
-<body>
 
-<div class="sidebar">
-    <div class="text-center mb-5 mt-3">
-        <h4 style="color: var(--bili-pink); font-weight: 900; letter-spacing: 1px;">
-            <i class="fab fa-bilibili"></i> 数学课代表
-        </h4>
+<body data-page="{{ active }}">
+
+    <div class="sidebar">
+        <div class="text-center mb-5 mt-3">
+            <h4 class="brand-title">
+                <i class="fab fa-bilibili"></i> 数学课代表
+            </h4>
+        </div>
+        <nav class="nav flex-column px-2">
+            <a class="nav-link {% if active=='dashboard' %}active{% endif %}" href="/">
+                <i class="fas fa-chart-pie fa-fw"></i> 数据仪表盘</a>
+            <a class="nav-link {% if active=='resources' %}active{% endif %}" href="/resources">
+                <i class="fas fa-layer-group fa-fw"></i> 知识检索库</a>
+            <a class="nav-link {% if active=='recommend' %}active{% endif %}" href="/recommend">
+                <i class="fas fa-wand-magic-sparkles fa-fw"></i> 智能推荐</a>
+            <a class="nav-link {% if active=='profile' %}active{% endif %}" href="/profile">
+                <i class="fas fa-user-graduate fa-fw"></i> 个人中心</a>
+        </nav>
     </div>
-    <nav class="nav flex-column px-2">
-        <a class="nav-link {% if active=='dashboard' %}active{% endif %}" href="/">
-            <i class="fas fa-chart-pie fa-fw"></i> 数据仪表盘
-        </a>
-        <a class="nav-link {% if active=='resources' %}active{% endif %}" href="/resources">
-            <i class="fas fa-layer-group fa-fw"></i> 资源检索库
-        </a>
-        <a class="nav-link {% if active=='recommend' %}active{% endif %}" href="/recommend">
-            <i class="fas fa-lightbulb fa-fw"></i> 上岸捷径
-        </a>
-        <a class="nav-link {% if active=='profile' %}active{% endif %}" href="/profile">
-            <i class="fas fa-user-graduate fa-fw"></i> 个人中心
-        </a>
-    </nav>
-</div>
 
-<div class="main-content">
-    <!-- Top Navbar (使用 Flexbox 实现三栏布局，搜索框居中) -->
-    <div class="d-flex justify-content-between align-items-center mb-4 bg-white px-4 py-3 rounded-4 shadow-sm sticky-top" style="z-index: 999;">
+    <div class="main-content">
+        <div class="toast-container" id="toastContainer" data-role="toast-container" aria-live="polite"
+            aria-atomic="true"></div>
+        <!-- Top Navbar (使用 Flexbox 实现三栏布局，搜索框居中) -->
+        <div
+            class="d-flex justify-content-between align-items-center mb-4 bg-white px-4 py-3 rounded-4 shadow-sm sticky-top topbar">
 
-        <!-- 左侧占位 (与右侧等宽，保证搜索框视觉居中) -->
-        <div style="width: 200px;">
-            <span class="text-muted topbar-date"><i class="fas fa-calendar-alt me-1"></i> 今日: <span id="current-date"></span></span>
-        </div>
-
-        <!-- 中间：全局搜索框 (完美居中) -->
-        <div class="flex-grow-1 d-flex justify-content-center">
-            <div class="input-group shadow-sm" style="max-width: 500px; width: 100%;">
-                <!-- ✅ 修改点：移除了放大镜图标 span，恢复了 input 的左边框 -->
-                <input type="text" id="global-search-input" class="form-control py-2 ps-4"
-                       placeholder="搜索 知识点 / UP主 / 题目..."
-                       style="box-shadow: none;"
-                       onkeypress="if(event.keyCode==13) doGlobalSearch()">
-                <button class="btn btn-bili btn-search px-4" onclick="doGlobalSearch()">搜索</button>
+            <!-- 左侧占位 (与右侧等宽，保证搜索框视觉居中) -->
+            <div class="topbar-slot">
+                <span class="text-muted topbar-date"><i class="fas fa-calendar-alt me-1"></i> 今日: <span
+                        id="current-date"></span></span>
             </div>
-        </div>
 
-        <!-- 右侧：用户菜单 -->
-        <div class="d-flex justify-content-end align-items-center" style="width: 200px;">
-            <div class="dropdown">
-                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    {% set display_name = current_user.username or current_user.account %}
-                    {% set desc = current_user.description or '' %}
-                    <div class="text-end me-2 d-none d-lg-block">
-                        <div class="fw-bold topbar-username">{{ display_name }}</div>
-                        <div class="text-muted topbar-signature">{{ desc[:10] }}</div>
-                    </div>
-                    {% if current_user.avatar %}
+            <!-- 中间：全局搜索框 (完美居中) -->
+            <div class="flex-grow-1 d-flex justify-content-center">
+                <div class="input-group shadow-sm topbar-search">
+                    <!-- 修改点：移除了放大镜图标 span，恢复了 input 的左边框 -->
+                    <input type="text" id="global-search-input" class="form-control py-2 ps-4 input-no-shadow"
+                        placeholder="搜索 知识点/ UP主/ 题目..." aria-label="全局搜索"
+                        onkeypress="if(event.keyCode==13) doGlobalSearch()">
+                    <button type="button" class="btn btn-bili btn-search px-4" onclick="doGlobalSearch()">搜索</button>
+                </div>
+            </div>
+
+            <!-- 右侧：用户菜单 -->
+            <div class="d-flex justify-content-end align-items-center topbar-user-slot">
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark"
+                        id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% set display_name = current_user.username or current_user.account %}
+                        {% set desc = current_user.description or '' %}
+                        <div class="text-end me-2 d-none d-lg-block">
+                            <div class="fw-bold topbar-username">{{ display_name }}</div>
+                            <div class="text-muted topbar-signature">{{ desc[:10] }}</div>
+                        </div>
+                        {% if current_user.avatar %}
                         <img src="{{ url_for('static', filename='avatars/' + current_user.avatar) }}"
-                             class="rounded-circle border shadow-sm"
-                             width="42" height="42" style="object-fit: cover;"
-                             onerror="this.src='{{ url_for('static', filename='img/default-avatar.svg') }}'">
-                    {% else %}
+                            class="rounded-circle border shadow-sm avatar-img" width="42" height="42"
+                            onerror="this.src='{{ url_for('static', filename='img/default-avatar.svg') }}'">
+                        {% else %}
                         <img src="{{ url_for('static', filename='img/default-avatar.svg') }}"
-                             class="rounded-circle shadow-sm border"
-                             width="42" height="42" style="object-fit: cover;">
-                    {% endif %}
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2" aria-labelledby="userDropdown">
-                    <li><a class="dropdown-item py-2" href="/profile"><i class="fas fa-user me-2 text-primary"></i> 个人中心</a></li>
-                    <li><a class="dropdown-item py-2" href="/recommend"><i class="fas fa-lightbulb me-2 text-warning"></i> 上岸捷径</a></li>
-                    <li><a class="dropdown-item py-2" href="/compare"><i class="fas fa-user-friends me-2 text-info"></i> UP 对比</a></li>
-                    <li><a class="dropdown-item py-2" href="/spider"><i class="fas fa-sync-alt me-2 text-secondary"></i> 数据更新（管理）</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item py-2 text-danger" href="/logout"><i class="fas fa-sign-out-alt me-2"></i> 退出登录</a></li>
-                </ul>
+                            class="rounded-circle shadow-sm border avatar-img" width="42" height="42">
+                        {% endif %}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2"
+                        aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item py-2" href="/profile"><i class="fas fa-user me-2 text-primary"></i>
+                                个人中心</a></li>
+                        <li><a class="dropdown-item py-2" href="/resources"><i
+                                    class="fas fa-search me-2 text-warning"></i> 知识检索库</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item py-2 text-danger" href="/logout"><i
+                                    class="fas fa-sign-out-alt me-2"></i> 退出登录</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
+
+        {% block content %}{% endblock %}
     </div>
 
-    {% block content %}{% endblock %}
-</div>
+    <script>
+        function doGlobalSearch() {
+            var keyword = document.getElementById('global-search-input').value;
+            if (keyword.trim()) {
+                window.location.href = "/resources?q=" + encodeURIComponent(keyword);
+            }
+        }
+        // 显示日期
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString();
+    </script>
 
-<script>
-function doGlobalSearch() {
-    var keyword = document.getElementById('global-search-input').value;
-    if(keyword.trim()) {
-        window.location.href = "/resources?q=" + encodeURIComponent(keyword);
-    }
-}
-// 显示日期
-document.getElementById('current-date').innerText = new Date().toLocaleDateString();
-</script>
 
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-{% block scripts %}{% endblock %}
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/app/bootstrap.js') }}"></script>
+    {% block scripts %}{% endblock %}
 </body>
+
 </html>

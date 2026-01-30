@@ -1,15 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
-  <g fill="none" stroke="#FB7299" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="60" y1="22" x2="60" y2="34"/>
-    <circle cx="60" cy="18" r="4" fill="#FB7299" stroke="none"/>
+  <defs>
+    <style>
+      /* 定义圆润的描边风格 */
+      .cute-style {
+        fill: none;
+        stroke: #FB7299;
+        stroke-width: 8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      /* 眼睛设为实心填充，作为Web标签时更清晰 */
+      .eyes {
+        fill: #FB7299;
+        stroke: none;
+      }
+    </style>
+  </defs>
 
-    <rect x="28" y="36" width="64" height="58" rx="14"/>
-    <rect x="20" y="52" width="10" height="16" rx="5"/>
-    <rect x="90" y="52" width="10" height="16" rx="5"/>
+  <!-- 1. 左天线 -->
+  <path d="M42 32 L32 18" class="cute-style"/>
 
-    <circle cx="48" cy="64" r="4" fill="#FB7299" stroke="none"/>
-    <circle cx="72" cy="64" r="4" fill="#FB7299" stroke="none"/>
+  <!-- 2. 右天线 -->
+  <path d="M78 32 L88 18" class="cute-style"/>
 
-    <path d="M52 78h16"/>
-  </g>
+  <!-- 3. 脸部轮廓：圆角矩形 -->
+  <!-- 调整了圆角 rx=18，让它看起来更Q弹软萌 -->
+  <rect x="20" y="32" width="80" height="62" rx="18" class="cute-style"/>
+
+  <!-- 4. 眼睛 -->
+  <!-- 使用竖椭圆，位置居中 -->
+  <ellipse cx="45" cy="63" rx="5" ry="8" class="eyes"/>
+  <ellipse cx="75" cy="63" rx="5" ry="8" class="eyes"/>
 </svg>

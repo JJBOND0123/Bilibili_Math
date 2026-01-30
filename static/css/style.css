@@ -7,14 +7,60 @@
     --bili-gray: #9499A0;
     --bili-border: #E3E5E7;
     --bili-bg: #F6F7F8;
+    
+    /* Global Colors & vars */
+    --bili-blue: #00AEEC;
+    --bili-green: #2AC864;
+    --bili-text-main: var(--bili-text);
+    --bili-text-gray: var(--bili-gray);
+    --bili-bg-light: #F1F2F3;
+    --bili-bg-blue-light: #F1F8FF;
+    --anim-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+
+    /* Unified tokens (ui-ux-pro-max) */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --card-radius: var(--radius-md);
+
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 0.3s var(--anim-ease);
+
+    --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.06);
+    --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.15);
+    --shadow-glow-pink: 0 8px 32px rgba(251, 114, 153, 0.3);
+
+    --gradient-primary: linear-gradient(135deg, var(--bili-pink) 0%, #FF8EB3 100%);
+    --gradient-hot: linear-gradient(135deg, var(--bili-pink) 0%, #f5576c 100%);
+
+    --surface: #fff;
+    --surface-2: var(--bili-bg);
 }
 
 body {
     background-color: var(--bg-gray);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--bili-text);
 }
 
-/* --- 通用布局 --- */
+/* Focus rings (accessibility) */
+.btn-bili:focus-visible,
+.btn-filter:focus-visible,
+.card-action-btn:focus-visible,
+.refresh-btn:focus-visible,
+.strategy-select:focus-visible,
+.difficulty-select:focus-visible,
+.form-control-custom:focus-visible,
+.nav-link:focus-visible,
+.dropdown-item:focus-visible,
+#global-search-input:focus-visible {
+    outline: 2px solid rgba(0, 174, 236, 0.55);
+    outline-offset: 2px;
+}
+
+/* --- Global Layout --- */
 .topbar-date { font-size: 0.95rem; font-weight: 600; }
 .topbar-username { font-size: 1rem; letter-spacing: 0.5px; }
 .topbar-signature { font-size: 0.85rem; }
@@ -33,7 +79,7 @@ body {
 .nav-link:hover, .nav-link.active { background-color: var(--bili-pink); color: white; }
 .nav-link i { width: 30px; text-align: center; }
 
-/* --- B站通用面板 (Cards) --- */
+/* --- Bilibili Panels (Cards) --- */
 .bili-panel {
     background: #fff; border: 1px solid var(--bili-border); border-radius: 6px;
     padding: 16px 20px; margin-bottom: 16px;
@@ -56,81 +102,271 @@ body {
 }
 .panel-subtitle { font-size: 12px; color: var(--bili-gray); font-weight: normal; }
 
-/* --- 学术解剖页专用样式 (Compare Page) --- */
-
-/* 1. 顶部 PK 控制台 */
-.pk-console {
-    display: flex; flex-direction: row !important;
-    align-items: center; justify-content: space-between;
-    padding: 20px 30px;
-    overflow: visible !important; /* 允许下拉框超出边界显示 */
-    z-index: 999; /* 确保层级比下面的图表高，不被遮挡 */
+/* --- Common Components --- */
+.brand-title {
+    color: var(--bili-pink);
+    font-weight: 900;
+    letter-spacing: 1px;
 }
-.fighter-zone { flex: 1; display: flex; flex-direction: column; align-items: center; }
-.zone-label { font-size: 12px; color: var(--bili-gray); margin-bottom: 6px; letter-spacing: 1px; font-weight: 600; }
+.topbar { z-index: 999; }
+.topbar-slot { width: 200px; }
+.topbar-search { max-width: 500px; width: 100%; }
+.input-no-shadow { box-shadow: none; }
+.topbar-user-slot { width: 200px; }
+.avatar-img { object-fit: cover; }
 
-/* 自定义下拉框 */
-.bili-select-wrapper { position: relative; width: 100%; max-width: 360px; }
-.bili-select-trigger {
-    background: var(--bili-bg); border: 1px solid transparent; border-radius: 6px; height: 44px;
-    display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
-    cursor: pointer; transition: all 0.2s;
-}
-.bili-select-trigger span { font-size: 16px; font-weight: 600; color: var(--bili-text); }
-.bili-select-trigger i { color: var(--bili-gray); transition: transform 0.2s; }
-.bili-select-trigger:hover { background: #fff; border-color: var(--bili-border); }
-.active .bili-select-trigger { background: #fff; border-color: var(--tech-blue); box-shadow: 0 0 0 2px rgba(0, 174, 236, 0.1); }
-.active .bili-select-trigger i { transform: rotate(180deg); }
-
-.bili-options {
-    position: absolute; top: 110%; left: 0; width: 100%; background: #fff; border: 1px solid var(--bili-border);
-    border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-height: 300px; overflow-y: auto;
-    display: none; z-index: 100; padding: 6px 0;
-}
-.active .bili-options { display: block; }
-.bili-option { padding: 10px 16px; font-size: 14px; color: var(--bili-text); cursor: pointer; }
-.bili-option:hover { background: var(--bili-bg); color: var(--tech-blue); }
-.zone-blue .active .bili-select-trigger { border-color: var(--tech-blue); }
-.zone-pink .active .bili-select-trigger { border-color: var(--bili-pink); }
-
-/* VS 中轴 */
-.vs-axis { width: 100px; text-align: center; }
-.vs-text {
-    font-family: 'Impact', sans-serif; font-size: 42px; font-style: italic;
-    background: linear-gradient(90deg, var(--tech-blue) 40%, var(--bili-pink) 60%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    line-height: 1; margin-bottom: 8px;
-}
-.btn-start {
-    background: var(--bili-text); color: #fff; border: none; padding: 6px 20px; border-radius: 20px;
-    font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s;
-}
-.btn-start:hover { transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-
-/* 数据表格 */
-.data-table { width: 100%; border-collapse: collapse; }
-.data-row { border-bottom: 1px solid #f7f7f7; transition: background 0.2s; }
-.data-row:hover { background: #fafafa; }
-.data-cell { padding: 10px 8px; font-size: 14px; }
-.cell-label { color: var(--bili-gray); font-weight: 500; width: 30%; }
-.cell-val-blue { color: var(--tech-blue); font-weight: 700; font-size: 15px; width: 35%; text-align: center; }
-.cell-val-pink { color: var(--bili-pink); font-weight: 700; font-size: 15px; width: 35%; text-align: center; }
-
-/* 动画 */
-.chart-init-hidden { opacity: 0; }
-@keyframes flowerBloom {
-    0% { transform: scale(0.1); opacity: 0; }
-    60% { transform: scale(1.05); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
-}
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.animate-flower { animation: flowerBloom 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform-origin: center center; }
-.animate-fade { animation: fadeInUp 0.8s ease-out forwards; }
-
-/* Bootstrap 辅助类重写 */
+/* Helper Classes */
 .btn-bili { background-color: var(--bili-pink); border-color: var(--bili-pink); color: white; }
 .btn-bili:hover { background-color: #E04B81; color: white; }
 .btn-search:hover { color: #ffffff !important; }
+
+/* Gradients */
+.card-gradient-blue { background: linear-gradient(120deg, #00a1d6 0%, #4facfe 100%); }
+.card-gradient-pink { background: linear-gradient(120deg, #fb7299 0%, #ff9a9e 100%); }
+.card-gradient-orange { background: linear-gradient(120deg, #ff9a44 0%, #fc6076 100%); }
+.card-gradient-green { background: linear-gradient(120deg, #00b09b 0%, #96c93d 100%); }
+.hover-up { transition: transform 0.2s; }
+.hover-up:hover { transform: translateY(-5px); }
+.display-6 { font-size: 2rem; letter-spacing: -1px; }
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.35s ease; }
+.hover-shadow:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+
+/* Skeleton */
+.skeleton {
+    background: #f0f2f5;
+    background-image: linear-gradient(90deg, #f0f2f5 25%, #f7f9fa 37%, #f0f2f5 63%);
+    background-size: 400% 100%;
+    animation: skeleton-loading 1.4s ease infinite;
+}
+@keyframes skeleton-loading {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+}
+
+.sk-card { height: 240px; border-radius: var(--radius-md); }
+
+/* --- Global Toast (shared) --- */
+.toast-container {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    pointer-events: none;
+}
+
+.toast-container .custom-toast,
+.toast-container .toast {
+    pointer-events: auto;
+}
+
+.custom-toast {
+    background: linear-gradient(135deg, rgba(30, 31, 34, 0.95), rgba(50, 51, 54, 0.95));
+    backdrop-filter: blur(10px);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-strong);
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all var(--transition-smooth);
+}
+
+.custom-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.custom-toast i { color: var(--bili-green); }
+
+/* --- Global Video Cards (shared) --- */
+.bili-card {
+    background: var(--surface);
+    border-radius: var(--card-radius);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid #F1F2F3;
+    overflow: hidden;
+}
+
+.bili-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.bili-card .card-img-box {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/10;
+    background: var(--surface-2);
+    overflow: hidden;
+}
+
+.bili-card .card-img-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-smooth);
+}
+
+.bili-card:hover .card-img-box img {
+    transform: scale(1.05);
+}
+
+.bili-card .duration-badge {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.bili-card .card-info {
+    padding: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.bili-card .card-title {
+    font-size: 14px;
+    color: var(--bili-text-main);
+    text-decoration: none;
+    font-weight: 650;
+    line-height: 1.5;
+    height: 42px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    transition: color var(--transition-fast);
+}
+
+.bili-card .card-title:hover {
+    color: var(--bili-blue);
+}
+
+.bili-card .up-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--bili-text-gray);
+    margin-top: 10px;
+}
+
+.bili-card .up-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #E3E5E7;
+    flex: 0 0 auto;
+}
+
+.bili-card .stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+}
+
+.bili-card .card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.bili-card .card-action-btn {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--bili-bg-light);
+    border: 1px solid var(--bili-border);
+    font-size: 12px;
+    color: #61666D;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    user-select: none;
+    min-height: 38px;
+}
+
+.bili-card .card-action-btn:hover {
+    background: var(--bili-bg-blue-light);
+    border-color: #CBEAFF;
+    color: var(--bili-blue);
+}
+
+.bili-card .card-action-btn.active {
+    background: var(--bili-pink);
+    border-color: var(--bili-pink);
+    color: #fff;
+}
+
+/* --- Pagination (shared) --- */
+.bili-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding-left: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.bili-pager .page-item .page-link {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--bili-bg-light);
+    color: var(--bili-text-main);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bili-pager .page-item .page-link:hover {
+    background: var(--bili-border);
+}
+
+.bili-pager .page-item.active .page-link {
+    background: var(--gradient-primary);
+    color: #fff;
+    box-shadow: var(--shadow-glow-pink);
+}
+
+.bili-pager .page-item.disabled .page-link {
+    color: #c9ccd0;
+    cursor: not-allowed;
+    background: var(--bili-bg-light);
+}

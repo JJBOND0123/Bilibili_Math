@@ -1,531 +1,86 @@
 {% extends "base.html" %}
 
+{% block head %}
+<link href="{{ url_for('static', filename='css/resources.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<style>
-    /* ================== Bilibili 风格优化版 ================== */
-    :root {
-        --bili-pink: #FB7299;
-        --bili-blue: #00AEEC;
-        --bili-bg-blue-light: #F1F8FF; /* 极淡的蓝色背景 */
-        --bili-text-main: #18191C;
-        --bili-text-gray: #9499A0;
-    }
+<div data-feature="resources">
+    <!-- 页面主体 -->
+    <div class="recommend-page">
+        <!-- 筛选区域 -->
+        <div class="filter-section">
+            <div class="filter-header">
+                <div class="filter-title">
+                    <span>知识检索库</span>
+                </div>
+                <div class="filter-actions">
+                    <!-- 推荐策略下拉框 -->
+                    <select class="strategy-select" data-role="strategy-select">
+                        <option value="hot">热门推荐</option>
+                        <option value="popular">高口碑</option>
+                        <option value="latest">最新发布</option>
+                    </select>
+                    <!-- 难度下拉框 -->
+                    <select class="difficulty-select" data-role="difficulty-select">
+                        <option value="">全部难度</option>
+                        <option value="入门">入门级</option>
+                        <option value="进阶">进阶级</option>
+                        <option value="高阶">高阶级</option>
+                    </select>
+                    <button type="button" class="refresh-btn" data-action="refresh" aria-label="换一批">
+                        <i class="fas fa-arrows-rotate"></i>
+                    </button>
+                </div>
+            </div>
 
-    /* 1. 筛选区 (交互优化) */
-    .filter-container { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #E3E5E7; }
-    .filter-row { display: flex; align-items: baseline; margin-bottom: 10px; position: relative; }
-    .filter-title { width: 50px; font-size: 14px; color: var(--bili-text-gray); flex-shrink: 0; margin-top: 6px; font-weight: 500;}
-    .filter-list { display: flex; flex-wrap: wrap; gap: 6px; }
+            <!-- 学科分类 -->
+            <div class="filter-group">
+                <div class="course-tabs" data-role="course-tabs">
+                    <!-- 动态加载 -->
+                </div>
+            </div>
 
-    /* 通用按钮样式 */
-    .filter-item {
-        padding: 5px 12px; font-size: 14px; color: var(--bili-text-main); border-radius: 6px;
-        cursor: pointer; transition: all 0.2s ease; position: relative;
-    }
-    .filter-item:hover { color: var(--bili-blue); background-color: #F6F7F8; }
-
-    /* 一级分类激活态：带向下小箭头 */
-    #parent-category-list .filter-item.active {
-        color: var(--bili-blue);
-        background-color: var(--bili-bg-blue-light);
-        font-weight: 600;
-    }
-    /* 小三角 (视觉引导) */
-    #parent-category-list .filter-item.active::after {
-        content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
-        border: 6px solid transparent; border-top-color: var(--bili-bg-blue-light);
-        z-index: 2;
-    }
-
-    /* 二级分类容器：灰色背景盒，产生包裹感 */
-    #sub-category-row {
-        background-color: #F6F7F8;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-top: 4px; /* 紧贴上一行 */
-        margin-bottom: 16px;
-        animation: slideDown 0.2s ease-out;
-    }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* 二级分类按钮样式 */
-    #sub-category-list .filter-item.active {
-        color: #fff; background-color: var(--bili-blue); /* 二级选中实心蓝 */
-    }
-
-    /* 2. 排序栏 */
-    .sort-bar { display: flex; align-items: center; margin-bottom: 20px; }
-    .sort-btn {
-        font-size: 14px; color: var(--bili-text-main); margin-right: 24px; cursor: pointer;
-        padding: 6px 0; position: relative; background: none; border: none;
-    }
-    .sort-btn:hover { color: var(--bili-blue); }
-    .sort-btn.active { color: var(--bili-blue); font-weight: 600; }
-    .sort-btn.active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; height: 2px; background-color: var(--bili-blue); }
-
-    /* 3. 视频卡片 (布局调整：增加日期) */
-    .bili-card {
-        background: #fff; border-radius: 6px; transition: all 0.2s;
-        display: flex; flex-direction: column; height: 100%;
-    }
-    .bili-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
-    .card-img-box {
-        position: relative; width: 100%; aspect-ratio: 16/10; border-radius: 6px; overflow: hidden; background: #F1F2F3;
-    }
-    .card-img-box img { width: 100%; height: 100%; object-fit: cover; }
-    .duration-badge {
-        position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.6);
-        color: #fff; font-size: 12px; padding: 1px 6px; border-radius: 4px;
-    }
-
-    .card-info {
-        padding: 10px; /* 紧凑一点 */
-        flex: 1; display: flex; flex-direction: column;
-    }
-
-    .card-title {
-        font-size: 15px; color: var(--bili-text-main); line-height: 22px;
-        height: 44px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-        margin-bottom: 8px; text-decoration: none; transition: color 0.2s; font-weight: 500;
-    }
-    .card-title:hover { color: var(--bili-blue); }
-
-    /* 卡片底部信息：改为两行布局 */
-    .card-meta { margin-top: auto; display: flex; flex-direction: column; gap: 4px; }
-
-    /* 第一行：UP主 */
-    .meta-row-up {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 12px;
-        color: var(--bili-text-gray);
-        text-decoration: none;
-    }
-    .meta-row-up:hover { color: var(--bili-blue); }
-    .meta-row-up .up-avatar {
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        object-fit: cover;
-        flex: 0 0 auto;
-        background: #E3E5E7;
-    }
-    .meta-row-up span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90%; }
-
-    /* 第二行：数据 + 日期 */
-    .meta-row-stat { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: #999; }
-    .meta-left { display: flex; align-items: center; }
-    .meta-left i { margin-right: 4px; }
-
-    /* 卡片底部操作 */
-    .card-actions { display: flex; gap: 8px; margin-top: 10px; }
-    .card-action-btn {
-        flex: 1;
-        border: 1px solid #E3E5E7;
-        background: #F6F7F8;
-        color: #61666D;
-        font-size: 12px;
-        padding: 6px 0;
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        user-select: none;
-    }
-    .card-action-btn:hover { background: #E3F5FF; border-color: #CBEAFF; color: var(--bili-blue); }
-    .card-action-btn.active { background: var(--bili-pink); border-color: var(--bili-pink); color: #fff; }
-
-    /* Toast */
-    .toast-container { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 9999; pointer-events: none; }
-    .custom-toast {
-        background: rgba(0,0,0,0.8); color: #fff; padding: 8px 16px; border-radius: 8px;
-        opacity: 0; transform: translateY(-12px); transition: 0.25s;
-        font-size: 13px; line-height: 1.2;
-    }
-    .custom-toast.show { opacity: 1; transform: translateY(0); }
-
-    /* 4. 分页器 (完全保留原样) */
-    .bili-pager { gap: 6px; }
-    .bili-pager .page-item .page-link {
-        border: 1px solid #E3E5E7; background-color: #fff; color: var(--bili-text-main);
-        border-radius: 4px; min-width: 38px; height: 38px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 14px; padding: 0 14px; cursor: pointer; transition: all 0.2s;
-    }
-    .bili-pager .page-item .page-link:hover { background-color: #F6F7F8; color: var(--bili-text-main); border-color: #E3E5E7; }
-    .bili-pager .page-item.active .page-link { background-color: var(--bili-pink); border-color: var(--bili-pink); color: #fff; }
-    .bili-pager .page-item.active .page-link:hover { background-color: var(--bili-pink); color: #fff; }
-    .bili-pager .page-item.disabled .page-link { background-color: transparent; border: none; color: #ccc; pointer-events: none; }
-    .bili-pager .page-item.disabled.nav-btn .page-link { border: 1px solid #eee; background-color: #fcfcfc; }
-</style>
-
-<div class="toast-container" id="toastContainer"></div>
-
-<!-- 1. 筛选区 -->
-<div class="filter-container">
-    <!-- 第一行：阶段 (一级) -->
-    <div class="filter-row">
-        <div class="filter-title">阶段</div>
-        <div class="filter-list" id="parent-category-list">
-            <!-- JS 渲染 -->
+            <!-- 知识点 -->
+            <div class="filter-group">
+                <div class="topic-filters" data-role="topic-filters">
+                    <div class="topic-chip active" data-action="filter" data-filter="topic" data-value="">
+                        <span>全部</span>
+                        <span class="chip-count" id="topicAllCount">-</span>
+                    </div>
+                    <!-- 动态加载 -->
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- 第二行：内容 (二级 - 视觉上包裹在盒子里) -->
-    <div class="filter-row" id="sub-category-row" style="display:none;">
-        <div class="filter-title">内容</div>
-        <div class="filter-list" id="sub-category-list">
-            <!-- JS 渲染 -->
-        </div>
-    </div>
+        <!-- 视频网格 -->
+        <div class="video-section">
+            <div class="section-header">
+                <div class="result-info">
+                    找到 <strong data-role="total-count-inline">0</strong> 个推荐视频
+                </div>
+            </div>
 
-    <!-- 第三行：热搜 -->
-    <div class="filter-row">
-        <div class="filter-title">热搜</div>
-        <div class="filter-list" id="tag-list">
-            <span class="spinner-border spinner-border-sm text-secondary mt-1"></span>
+            <div class="video-grid" data-role="video-grid">
+                <!-- Loading State -->
+                <div class="loading-state">
+                    <div class="loading-spinner">
+                        <div class="spinner-ring"></div>
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <p>正在为您筛选优质内容...</p>
+                </div>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination-section" data-role="pagination">
+                <!-- 动态生成 -->
+            </div>
         </div>
     </div>
 </div>
-
-<!-- 2. 排序 -->
-<div class="sort-bar">
-    <button class="sort-btn active" onclick="changeSort('dry_goods', this)">综合排序</button>
-    <button class="sort-btn" onclick="changeSort('views', this)">最多播放</button>
-    <button class="sort-btn" onclick="changeSort('new', this)">最新发布</button>
-</div>
-
-<!-- 3. 视频列表 -->
-<div class="row g-4" id="video-grid">
-    <div class="col-12 text-center mt-5">
-        <div class="spinner-border text-primary opacity-50" role="status"></div>
-        <p class="mt-3 text-muted">正在检索...</p>
-    </div>
-</div>
-
-<!-- 4. 分页 -->
-<div class="d-flex justify-content-center align-items-center mt-5 mb-5">
-    <ul class="pagination bili-pager mb-0" id="pagination"></ul>
-</div>
-
 {% endblock %}
 
 {% block scripts %}
-<script>
-    // 定义核心状态
-    let state = { sort: 'dry_goods', category: 'all', page: 1, q: '', totalPages: 1 };
-
-    // ✅ 分类树改为从数据库动态生成（避免点进去空白）
-    let phaseByKey = {}; // key -> {label, count, subs:[{label,count}]}
-    let currentParent = 'all';
-
-    $(document).ready(function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const q = urlParams.get('q');
-        if (q) { state.q = q; $('#global-search-input').val(q); }
-
-        loadHotTags();
-        loadCategoryTree();
-    });
-
-    function loadCategoryTree() {
-        $.get('/api/category_tree')
-            .done(function(data) {
-                initCategories((data && data.phases) ? data.phases : []);
-                fetchVideos();
-            })
-            .fail(function() {
-                // 兜底：只展示“全部”，保证页面可用且不会出现空分类
-                initCategories([]);
-                fetchVideos();
-            });
-    }
-
-    // ✅ 一级分类渲染：来自数据库真实 phase
-    function initCategories(phases) {
-        phaseByKey = {};
-        const parentContainer = $('#parent-category-list');
-        let html = `<div class="filter-item active" onclick="selectParent('all', this)">全部</div>`;
-
-        (phases || []).forEach((p, idx) => {
-            const key = `p_${idx}`;
-            phaseByKey[key] = p;
-            html += `<div class="filter-item" onclick="selectParent('${key}', this)">${p.label}</div>`;
-        });
-
-        parentContainer.html(html);
-    }
-
-    // ✅ 选择一级分类
-    function selectParent(key, btn) {
-        currentParent = key;
-
-        // 1. 样式切换
-        $('#parent-category-list .filter-item').removeClass('active');
-        $(btn).addClass('active');
-
-        // 2. 如果选的是"全部"，直接搜索并隐藏二级菜单
-        if (key === 'all') {
-            $('#sub-category-row').hide();
-            state.category = 'all';
-            state.page = 1;
-            fetchVideos();
-            return;
-        }
-
-        const phase = phaseByKey[key];
-        if (!phase) {
-            $('#sub-category-row').hide();
-            state.category = 'all';
-            state.page = 1;
-            fetchVideos();
-            return;
-        }
-
-        // 3. 渲染二级菜单（“全部” + 该 phase 下真实存在的 subject）
-        const subs = phase.subs || [];
-        const subContainer = $('#sub-category-list');
-        let subHtml = '';
-
-        subHtml += `<div class="filter-item active" onclick="filterCat('全部', this, '${key}')">全部</div>`;
-        subs.forEach((s) => {
-            subHtml += `<div class="filter-item" onclick="filterCat('${s.label}', this, '${key}')">${s.label}</div>`;
-        });
-
-        subContainer.html(subHtml);
-        $('#sub-category-row').css('display', 'flex'); // 显示二级菜单
-
-        // 4. 默认先展示该 phase 的全部数据（不会为空）
-        state.category = phase.label;
-        state.page = 1;
-        fetchVideos();
-    }
-
-    // ✅ 核心筛选函数 (修改版)
-    function filterCat(c, btn, parentKey) {
-        // 样式处理
-        if (btn) {
-            $('#sub-category-list .filter-item').removeClass('active');
-            $(btn).addClass('active');
-        }
-
-        state.page = 1;
-
-        if (c === 'all') {
-            state.category = 'all';
-        } else if (c === '全部') {
-            const phase = phaseByKey[parentKey];
-            state.category = phase ? phase.label : 'all';
-        } else {
-            state.category = c;
-        }
-
-        fetchVideos();
-    }
-
-    function loadHotTags() {
-        $.get('/api/hot_tags', function(tags) {
-            let html = '';
-            let displayTags = tags.slice(0, 15);
-            displayTags.forEach(tag => {
-                let activeClass = (state.q === tag) ? 'active' : '';
-                html += `<div class="filter-item ${activeClass}" onclick="searchTag('${tag}', this)">${tag}</div>`;
-            });
-            $('#tag-list').html(html);
-        });
-    }
-
-    function fetchVideos() {
-        // 滚动回顶部
-        // window.scrollTo({ top: 0, behavior: 'smooth' }); // 如果觉得太晃眼可以注释掉
-
-        $('#video-grid').html('<div class="col-12 text-center mt-5"><div class="spinner-border text-secondary opacity-25"></div></div>');
-
-        $.get('/api/videos', state, function(res) {
-            state.totalPages = res.pages;
-            renderList(res.videos);
-            renderPagination(res.total, res.pages, res.current_page);
-        });
-    }
-
-    function renderList(videos) {
-        if (!videos || videos.length === 0) {
-            $('#video-grid').html('<div class="col-12 text-center py-5"><div class="text-muted">未找到相关内容</div></div>');
-            $('#pagination').empty();
-            return;
-        }
-
-        let html = '';
-        videos.forEach(v => {
-            let viewStr = formatCount(v.view_count);
-            let picUrl = v.pic_url || 'https://placehold.co/320x200/F6F7F8/9499A0?text=封面';
-            let badgeText = v.category || formatDuration(v.duration);
-            // ✅ 新增：日期格式化 (假设后端传的是 timestamp 或 字符串)
-            let dateStr = formatDate(v.pubdate);
-
-            html += `
-            <div class="col-md-3 col-sm-6">
-                <div class="bili-card">
-                    <div class="card-img-box">
-                        <a href="/go/${v.bvid}" target="_blank">
-                            <img src="${picUrl}" referrerpolicy="no-referrer" onerror="this.src='https://placehold.co/320x200/F6F7F8/9499A0?text=加载失败'">
-                        </a>
-                        <div class="duration-badge">${badgeText || 'HD'}</div>
-                    </div>
-
-                    <div class="card-info">
-                        <a href="/go/${v.bvid}" target="_blank" class="card-title" title="${v.title}">
-                            ${v.title}
-                        </a>
-
-                        <!-- ✅ 布局调整：分两行显示信息 -->
-                        <div class="card-meta">
-                            <!-- 第一行：UP主 -->
-                            <a class="meta-row-up" title="${v.up_name}" href="${v.up_space || 'javascript:void(0)'}" ${v.up_space ? 'target=\"_blank\"' : ''}>
-                                <img class="up-avatar" src="${v.up_face || `https://placehold.co/50x50/E3E5E7/999?text=${(v.up_name || 'U').charAt(0)}`}" referrerpolicy="no-referrer" onerror="this.src='https://placehold.co/50x50/E3E5E7/999?text=U'">
-                                <span>${v.up_name}</span>
-                            </a>
-                            <!-- 第二行：播放量 + 日期 -->
-                            <div class="meta-row-stat">
-                                <div class="meta-left">
-                                    <i class="far fa-play-circle"></i>
-                                    <span>${viewStr}</span>
-                                </div>
-                                <div class="meta-right">
-                                    <i class="far fa-clock me-1"></i>${dateStr}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card-actions">
-                            <button class="card-action-btn ${v.is_fav ? 'active' : ''}" onclick="toggleAction('${v.bvid}', 'fav', this, event)">
-                                <i class="far fa-heart"></i> 收藏
-                            </button>
-                            <button class="card-action-btn ${v.is_todo ? 'active' : ''}" onclick="toggleAction('${v.bvid}', 'todo', this, event)">
-                                <i class="fas fa-plus"></i> 待办
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        });
-        $('#video-grid').html(html);
-    }
-
-    function showToast(msg) {
-        const toast = $(`<div class="custom-toast"><i class="fas fa-check-circle" style="color:#2AC864; margin-right:6px;"></i>${msg}</div>`);
-        $('#toastContainer').append(toast);
-        setTimeout(() => toast.addClass('show'), 10);
-        setTimeout(() => { toast.removeClass('show'); setTimeout(() => toast.remove(), 260); }, 1800);
-    }
-
-    function toggleAction(bvid, type, btn, evt) {
-        if (evt) { evt.preventDefault(); evt.stopPropagation(); }
-        let $btn = $(btn);
-        let isActive = $btn.hasClass('active');
-        let url = isActive ? '/api/remove_action' : '/api/action';
-
-        $.ajax({
-            url: url,
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({bvid: bvid, type: type}),
-            success: function() {
-                $btn.toggleClass('active');
-                showToast(isActive ? '已取消' : '操作成功');
-            }
-        });
-    }
-
-    // 分页逻辑 (完全保留你原本的，不做任何修改)
-    function renderPagination(total, pages, current) {
-        if (pages <= 1) { $('#pagination').html(''); return; }
-
-        let html = '';
-        const makeBtn = (p, text, type) => {
-            let cls = type === 'active' ? 'active' : (type === 'disabled' ? 'disabled' : (type === 'nav-disabled' ? 'disabled nav-btn' : ''));
-            let click = (type === 'active' || type === 'disabled' || type === 'nav-disabled') ? '' : `onclick="changePage(${p})"`;
-            return `<li class="page-item ${cls}"><button class="page-link" ${click}>${text}</button></li>`;
-        };
-
-        if (current > 1) html += makeBtn(current - 1, '上一页', 'normal');
-        else html += makeBtn(0, '上一页', 'nav-disabled');
-
-        if (pages <= 10) {
-            for (let i = 1; i <= pages; i++) html += makeBtn(i, i, i === current ? 'active' : 'normal');
-        } else {
-            if (current <= 4) {
-                for (let i = 1; i <= 7; i++) html += makeBtn(i, i, i === current ? 'active' : 'normal');
-                html += makeBtn(0, '...', 'disabled');
-                html += makeBtn(pages, pages, 'normal');
-            } else if (current >= pages - 3) {
-                html += makeBtn(1, 1, 'normal');
-                html += makeBtn(0, '...', 'disabled');
-                for (let i = pages - 6; i <= pages; i++) html += makeBtn(i, i, i === current ? 'active' : 'normal');
-            } else {
-                html += makeBtn(1, 1, 'normal');
-                html += makeBtn(0, '...', 'disabled');
-                for (let i = current - 2; i <= current + 2; i++) html += makeBtn(i, i, i === current ? 'active' : 'normal');
-                html += makeBtn(0, '...', 'disabled');
-                html += makeBtn(pages, pages, 'normal');
-            }
-        }
-
-        if (current < pages) html += makeBtn(current + 1, '下一页', 'normal');
-        else html += makeBtn(0, '下一页', 'nav-disabled');
-
-        $('#pagination').html(html);
-    }
-
-    function changeSort(t,b) { state.sort=t; state.page=1; $('.sort-btn').removeClass('active'); $(b).addClass('active'); fetchVideos(); }
-
-    function searchTag(t,b) {
-        if(state.q===t) { state.q=''; $('#global-search-input').val(''); $('#tag-list .filter-item').removeClass('active'); }
-        else { state.q=t; $('#global-search-input').val(t); $('#tag-list .filter-item').removeClass('active'); $(b).addClass('active'); }
-        state.page=1; fetchVideos();
-    }
-
-    function changePage(p) { if(p>0 && p<=state.totalPages) { state.page=p; fetchVideos(); } }
-
-    // 补充工具函数
-    function formatCount(num) {
-        if (num > 100000000) return (num / 100000000).toFixed(2) + '亿';
-        if (num > 10000) return (num / 10000).toFixed(1) + '万';
-        return num ? num.toLocaleString() : '0';
-    }
-
-    function formatDuration(seconds) {
-        if(!seconds) return '';
-        let min = Math.floor(seconds / 60);
-        let sec = seconds % 60;
-        return (min < 10 ? '0'+min : min) + ':' + (sec < 10 ? '0'+sec : sec);
-    }
-
-    // 如果没有 logHistory 函数，防止报错
-    if (typeof logHistory === 'undefined') {
-        window.logHistory = function(bvid) {
-            // 简单的占位符，防止点击报错
-             $.ajax({ url: '/api/action', type: 'POST', contentType: 'application/json', data: JSON.stringify({bvid: bvid, type: 'history'}) });
-        };
-    }
-        // ✅ 新增辅助函数：日期格式化
-    function formatDate(dateInput) {
-        if (!dateInput) return '';
-        // 如果是时间戳(秒)，转毫秒
-        if (typeof dateInput === 'number' && dateInput < 10000000000) dateInput *= 1000;
-
-        let d = new Date(dateInput);
-        if (isNaN(d.getTime())) return '近期'; // 防止非法日期
-
-        let month = d.getMonth() + 1;
-        let day = d.getDate();
-        // 返回 M-D 格式，比如 11-23
-        return (month < 10 ? '0'+month : month) + '-' + (day < 10 ? '0'+day : day);
-    }
-</script>
+<!-- JS loaded via bootstrap.js in base.html based on data-page="recommend" -->
 {% endblock %}

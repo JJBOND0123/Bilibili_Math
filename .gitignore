@@ -33,3 +33,14 @@ subject_classifier.pkl
 
 # Logs
 *.log
+
+# Local UI screenshots (debug)
+dashboard_*.png
+recommend_*.png
+profile_optimized.png
+resources_optimized.png
+
+# Codex/agent metadata
+.agent/
+.serena/
+.shared/

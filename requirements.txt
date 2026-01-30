@@ -1,18 +1,16 @@
-# Runtime（服务运行所需）
+# Runtime（Web + Spider + 离线处理）
 Flask==3.1.2
 Flask-Login==0.6.3
 Flask-SQLAlchemy==3.1.1
 SQLAlchemy==2.0.44
 PyMySQL==1.1.2
+
+# HTTP / Spider
 requests==2.32.5
 urllib3==2.2.3
-jieba==0.42.1
+
+# 图片处理（头像上传/缩略）
 Pillow==11.0.0
 
-# ML 训练/加载（训练 subject_classifier.pkl 时必需，推理加载模型也复用版本）
-pandas==2.2.3
-scikit-learn==1.5.2
-joblib==1.4.2
-
-# Dev/Test
-pytest==8.3.3
+# 本地开发：用 .env 管理敏感配置（可选但推荐）
+python-dotenv==1.0.1

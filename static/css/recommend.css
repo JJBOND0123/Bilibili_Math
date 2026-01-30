@@ -1,0 +1,53 @@
+/* static/css/resources.css */
+/* Uses shared tokens/layout in static/css/style.css */
+
+/* Filter Buttons */
+.sort-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 12px;
+}
+
+.btn-filter {
+    font-size: 14px;
+    color: var(--bili-text-gray);
+    cursor: pointer;
+    padding: 8px 20px;
+    position: relative;
+    background: #fff;
+    border: 1px solid #E3E5E7;
+    border-radius: 20px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    gap: 6px;
+}
+
+.btn-filter:hover {
+    color: var(--bili-pink);
+    border-color: var(--bili-pink);
+    background-color: #FFF6F9;
+    /* Very light pink */
+    transform: translateY(-1px);
+}
+
+.btn-filter.active {
+    color: #fff;
+    font-weight: 600;
+    background: var(--bili-pink);
+    border-color: var(--bili-pink);
+    box-shadow: 0 4px 12px rgba(251, 114, 153, 0.3);
+}
+
+.btn-filter i {
+    font-size: 13px;
+}
+
+/* Secondary/Refresh Button */
+.btn-filter.secondary:hover {
+    color: var(--bili-blue);
+    border-color: var(--bili-blue);
+    background-color: #F1F8FF;
+}

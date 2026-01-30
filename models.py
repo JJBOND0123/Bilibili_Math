@@ -2,86 +2,135 @@
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-from sqlalchemy import func
+from sqlalchemy.sql import func
 
 db = SQLAlchemy()
 
 
 class Video(db.Model):
-    """采集到的 B 站课程/题解视频：既存储播放互动数据，也存储分类结果与补充信息。"""
+    """视频表：存储 B 站视频元数据（爬虫原始字段）"""
 
-    __tablename__ = 'videos'
+    __tablename__ = "videos"
 
-    # 主键使用 bvid，方便前后端直链跳转。
-    bvid = db.Column(db.String(20), primary_key=True)
+    # === 基础信息（视频ID 为主键） ===
+    视频ID = db.Column(db.String(20), primary_key=True, comment="B站视频ID")
+    AV号 = db.Column(db.BigInteger, comment="AV号")
+    视频链接 = db.Column(db.String(200), comment="视频链接")
+    标题 = db.Column(db.String(500), comment="视频标题")
+    描述 = db.Column(db.Text, comment="视频描述")
 
-    # 基础标识与文本
-    aid = db.Column(db.BigInteger)  # av 号（可选）
-    video_url = db.Column(db.String(255))
-    title = db.Column(db.String(255))
-    desc = db.Column(db.Text)  # 详情页简介（用于 NLP 训练/分析）
+    # === UP主信息 ===
+    UP主名称 = db.Column(db.String(100), comment="UP主名称")
+    UP主ID = db.Column(db.BigInteger, comment="UP主ID")
+    UP主头像 = db.Column(db.String(300), comment="UP主头像")
 
-    # UP 主信息
-    up_name = db.Column(db.String(100), index=True)
-    up_mid = db.Column(db.BigInteger)
-    up_face = db.Column(db.String(500))
+    # === 封面与时长 ===
+    封面图 = db.Column(db.String(300), comment="封面图链接")
+    时长 = db.Column(db.Integer, default=0, comment="时长(秒)")
+    发布时间 = db.Column(db.DateTime, comment="发布时间")
 
-    # 封面
-    pic_url = db.Column(db.String(500))
+    # === 互动数据 ===
+    播放量 = db.Column(db.BigInteger, default=0, comment="播放量")
+    弹幕数 = db.Column(db.Integer, default=0, comment="弹幕数")
+    评论数 = db.Column(db.Integer, default=0, comment="评论数")
+    收藏数 = db.Column(db.Integer, default=0, comment="收藏数")
+    点赞数 = db.Column(db.Integer, default=0, comment="点赞数")
+    投币数 = db.Column(db.Integer, default=0, comment="投币数")
+    分享数 = db.Column(db.Integer, default=0, comment="分享数")
 
-    # 播放互动数据
-    view_count = db.Column(db.Integer)
-    danmaku_count = db.Column(db.Integer)
-    reply_count = db.Column(db.Integer)
-    favorite_count = db.Column(db.Integer)
-    like_count = db.Column(db.Integer)
-    coin_count = db.Column(db.Integer)
-    share_count = db.Column(db.Integer)
+    # === 标签 ===
+    标签 = db.Column(db.Text, comment="视频标签(逗号分隔)")
 
-    duration = db.Column(db.Integer)  # 秒
-    pubdate = db.Column(db.DateTime, index=True)
+    # === 爬取时间 ===
+    爬取时间 = db.Column(db.DateTime, comment="爬虫抓取时间")
 
-    # 标签：tags 保持兼容（优先存真实 tags，无则回退关键词）；tag_names/source_keyword 供分析更精细使用
-    tags = db.Column(db.String(500))
-    tag_names = db.Column(db.String(1000))
-    source_keyword = db.Column(db.String(255))
+    enrichment = db.relationship(
+        "VideoEnrichment",
+        back_populates="video",
+        uselist=False,
+    )
 
-    # B 站原始分区信息（不要与本项目的分类字段混用）
-    bili_tid = db.Column(db.Integer)
-    bili_tname = db.Column(db.String(100))
 
-    # 本项目分类字段
-    category = db.Column(db.String(50))
-    phase = db.Column(db.String(50), index=True)
-    subject = db.Column(db.String(50), index=True)
+class VideoEnrichment(db.Model):
+    """视频衍生字段表：知识点/难度/质量分/是否推荐 等离线计算结果。"""
 
-    dry_goods_ratio = db.Column(db.Float)
-    crawl_time = db.Column(db.DateTime)
+    __tablename__ = "video_enrichments"
+
+    视频ID = db.Column(
+        db.String(20),
+        db.ForeignKey("videos.视频ID", ondelete="CASCADE"),
+        primary_key=True,
+        comment="B站视频ID",
+    )
+
+    # === 离线分类/评分结果 ===
+    科目 = db.Column(
+        db.String(20),
+        nullable=True,
+        comment="所属科目: 高等数学/线性代数/概率论与数理统计",
+    )
+    知识点 = db.Column(db.String(100), comment="知识点主题（离线预测，逗号分隔）")
+    难度 = db.Column(db.String(20), comment="难度等级: 入门/进阶/高阶")
+    质量分 = db.Column(db.Float, default=0, comment="综合评分 0-100")
+    是否推荐 = db.Column(db.Boolean, default=False, comment="是否推荐")
+
+    # === 时间戳 ===
+    更新时间 = db.Column(
+        db.DateTime, server_default=func.now(), onupdate=func.now(), comment="更新时间"
+    )
+
+    video = db.relationship("Video", back_populates="enrichment", uselist=False)
+
+    __table_args__ = (
+        db.Index("idx_video_enrich_subject", "科目"),
+        db.Index("idx_video_enrich_topic", "知识点"),
+        db.Index("idx_video_enrich_difficulty", "难度"),
+        db.Index("idx_video_enrich_quality_score", "质量分"),
+        db.Index("idx_video_enrich_is_recommended", "是否推荐"),
+    )
 
 
 class User(UserMixin, db.Model):
-    """用户账户表：仅存储基本资料和密码哈希。"""
+    """用户表：系统登录用户"""
 
-    __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    account = db.Column(db.String(50), unique=True, index=True, nullable=False)
-    username = db.Column(db.String(50))
-    password = db.Column(db.String(255))
-    description = db.Column(db.String(255))
-    avatar = db.Column(db.String(200))
+    __tablename__ = "users"
+
+    用户ID = db.Column(db.Integer, primary_key=True, comment="用户ID")
+    账号 = db.Column(
+        db.String(50),
+        unique=True,
+        nullable=False,
+        comment="登录账号",
+    )
+    昵称 = db.Column(db.String(50), comment="昵称")
+    密码 = db.Column(db.String(255), comment="密码哈希")
+    简介 = db.Column(
+        db.String(255),
+        server_default="努力学习的高数人",
+        comment="个人简介/收藏JSON",
+    )
+    头像 = db.Column(
+        db.String(200),
+        server_default="",
+        comment="头像路径",
+    )
+
+    def get_id(self):
+        """Flask-Login 需要的方法，返回用户ID字符串"""
+        return str(self.用户ID)
 
 
 class UserAction(db.Model):
-    """用户行为表：收藏/待看/历史记录都落在这里。"""
+    """用户行为表：收藏/历史记录都落在这里。"""
 
-    __tablename__ = 'user_actions'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer)
-    bvid = db.Column(db.String(20))
-    action_type = db.Column(db.String(20))
-    status = db.Column(db.Integer, default=0)
-    create_time = db.Column(db.DateTime, default=func.now())
+    __tablename__ = "user_actions"
+
+    行为ID = db.Column(db.Integer, primary_key=True, comment="行为ID")
+    用户ID = db.Column(db.Integer, comment="用户ID")
+    视频ID = db.Column(db.String(20), comment="B站视频ID")
+    行为类型 = db.Column(db.String(20), comment="行为类型(收藏/历史)")
+    创建时间 = db.Column(db.DateTime, default=func.now(), comment="创建时间")
 
     __table_args__ = (
-        db.UniqueConstraint('user_id', 'bvid', 'action_type', name='uq_user_action'),
+        db.UniqueConstraint("用户ID", "视频ID", "行为类型", name="uq_user_action"),
     )

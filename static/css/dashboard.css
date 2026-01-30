@@ -1,0 +1,91 @@
+/* static/css/dashboard.css */
+/* Dashboard Specific Styles */
+
+.nav-header {
+    background: #fff;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+#clock { line-height: 1; }
+
+.small-note { font-size: 0.8rem; }
+.chart-rank { height: 350px; }
+.chart-rose { height: 350px; }
+.chart-scatter { height: 450px; }
+.tooltip-left { text-align: left; }
+.tooltip-up { font-weight: bold; color: #00A1D6; }
+
+/* --- Compare Page / PK Console (if used in dashboard) --- */
+.pk-console {
+    display: flex; flex-direction: row !important;
+    align-items: center; justify-content: space-between;
+    padding: 20px 30px;
+    overflow: visible !important;
+    z-index: 999;
+}
+.fighter-zone { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.zone-label { font-size: 12px; color: var(--bili-gray); margin-bottom: 6px; letter-spacing: 1px; font-weight: 600; }
+
+.bili-select-wrapper { position: relative; width: 100%; max-width: 360px; }
+.bili-select-trigger {
+    background: var(--bili-bg); border: 1px solid transparent; border-radius: 6px; height: 44px;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
+    cursor: pointer; transition: all 0.2s;
+}
+.bili-select-trigger span { font-size: 16px; font-weight: 600; color: var(--bili-text); }
+.bili-select-trigger i { color: var(--bili-gray); transition: transform 0.2s; }
+.bili-select-trigger:hover { background: #fff; border-color: var(--bili-border); }
+.active .bili-select-trigger { background: #fff; border-color: var(--tech-blue); box-shadow: 0 0 0 2px rgba(0, 174, 236, 0.1); }
+.active .bili-select-trigger i { transform: rotate(180deg); }
+
+.bili-options {
+    position: absolute; top: 110%; left: 0; width: 100%; background: #fff; border: 1px solid var(--bili-border);
+    border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-height: 300px; overflow-y: auto;
+    display: none; z-index: 100; padding: 6px 0;
+}
+.active .bili-options { display: block; }
+.bili-option { padding: 10px 16px; font-size: 14px; color: var(--bili-text); cursor: pointer; }
+.bili-option:hover { background: var(--bili-bg); color: var(--tech-blue); }
+.zone-blue .active .bili-select-trigger { border-color: var(--tech-blue); }
+.zone-pink .active .bili-select-trigger { border-color: var(--bili-pink); }
+
+.vs-axis { width: 100px; text-align: center; }
+.vs-text {
+    font-family: 'Impact', sans-serif; font-size: 42px; font-style: italic;
+    background: linear-gradient(90deg, var(--tech-blue) 40%, var(--bili-pink) 60%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1; margin-bottom: 8px;
+}
+.btn-start {
+    background: var(--bili-text); color: #fff; border: none; padding: 6px 20px; border-radius: 20px;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s;
+}
+.btn-start:hover { transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+
+.data-table { width: 100%; border-collapse: collapse; }
+.data-row { border-bottom: 1px solid #f7f7f7; transition: background 0.2s; }
+.data-row:hover { background: #fafafa; }
+.data-cell { padding: 10px 8px; font-size: 14px; }
+.cell-label { color: var(--bili-gray); font-weight: 500; width: 30%; }
+.cell-val-blue { color: var(--tech-blue); font-weight: 700; font-size: 15px; width: 35%; text-align: center; }
+.cell-val-pink { color: var(--bili-pink); font-weight: 700; font-size: 15px; width: 35%; text-align: center; }
+
+.chart-init-hidden { opacity: 0; }
+@keyframes flowerBloom {
+    0% { transform: scale(0.1); opacity: 0; }
+    60% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-flower { animation: flowerBloom 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform-origin: center center; }
+.animate-fade { animation: fadeInUp 0.8s ease-out forwards; }

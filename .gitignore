@@ -35,7 +35,6 @@ subject_classifier.pkl
 *.log
 
 # Local UI screenshots (debug)
-docs/screenshots/
 dashboard_*.png
 recommend_*.png
 profile_optimized.png

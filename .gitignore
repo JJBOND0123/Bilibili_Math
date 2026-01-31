@@ -45,3 +45,6 @@ resources_optimized.png
 .codex/
 .serena/
 .shared/
+
+# 临时文件
+structure.txt

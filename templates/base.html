@@ -48,15 +48,12 @@
                         id="current-date"></span></span>
             </div>
 
-            <!-- 中间：全局搜索框 (完美居中) -->
+            <!-- 中间：全局搜索框 (胶囊形极简设计) -->
             <div class="flex-grow-1 d-flex justify-content-center">
-                <div class="input-group shadow-sm topbar-search">
-                    <!-- 修改点：移除了放大镜图标 span，恢复了 input 的左边框 -->
-                    <input type="text" id="global-search-input" class="form-control py-2 ps-4 input-no-shadow"
-                        placeholder="搜索 知识点/ UP主/ 题目..." aria-label="全局搜索"
-                        onkeypress="if(event.keyCode==13) doGlobalSearch()">
-                    <button type="button" class="btn btn-bili btn-search px-4" onclick="doGlobalSearch()">搜索</button>
-                </div>
+                <form class="search-capsule" action="/resources" method="get">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" name="q" placeholder="搜索 知识点 / UP主 / 题目...">
+                </form>
             </div>
 
             <!-- 右侧：用户菜单 -->
@@ -99,12 +96,6 @@
     </div>
 
     <script>
-        function doGlobalSearch() {
-            var keyword = document.getElementById('global-search-input').value;
-            if (keyword.trim()) {
-                window.location.href = "/resources?q=" + encodeURIComponent(keyword);
-            }
-        }
         // 显示日期
         document.getElementById('current-date').innerText = new Date().toLocaleDateString();
     </script>

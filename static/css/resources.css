@@ -73,27 +73,6 @@
     outline: none;
 }
 
-.refresh-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    background: #f6f7f8;
-    border: 1px solid #e3e5e7;
-    border-radius: var(--radius-md);
-    font-size: 14px;
-    color: #61666d;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.refresh-btn:hover {
-    background: var(--bili-pink);
-    border-color: var(--bili-pink);
-    color: #fff;
-}
-
 .filter-group {
     margin-bottom: 16px;
 }

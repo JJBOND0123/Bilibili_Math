@@ -5,33 +5,26 @@
 {% endblock %}
 
 {% block content %}
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="top-area-card text-center">
-            <img id="profile-avatar" src="" class="user-avatar mx-auto mb-3"
-                onerror="this.src='{{ url_for('static', filename='img/default-avatar.svg') }}'">
-            <div class="user-name" id="user-name">...</div>
-            <div class="user-sign mb-3" id="user-desc">...</div>
-            <button class="btn-edit-mini" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                <i class="far fa-edit"></i> 编辑资料
-            </button>
+<div class="profile-header-compact">
+    <div class="profile-left">
+        <img id="profile-avatar" src="" class="avatar-compact avatar-clickable"
+            onerror="this.src='{{ url_for('static', filename='img/default-avatar.svg') }}'" data-bs-toggle="modal"
+            data-bs-target="#editProfileModal" title="点击编辑资料">
+        <div class="user-info-compact">
+            <div class="user-name-compact" id="user-name">...</div>
+            <div class="user-desc-compact" id="user-desc">...</div>
         </div>
     </div>
-
-    <div class="col-md-9">
-        <div class="top-area-card">
-            <div class="stats-row">
-                <div class="stat-item stat-clickable"
-                    onclick="switchTab('fav-pane', document.querySelectorAll('.bili-tab-item')[0])">
-                    <div class="stat-num num-pink" id="stat-fav-count">-</div>
-                    <div class="stat-label">收藏视频</div>
-                </div>
-                <div class="stat-item stat-clickable"
-                    onclick="switchTab('history-pane', document.querySelectorAll('.bili-tab-item')[1])">
-                    <div class="stat-num stat-num-orange" id="stat-history-count">-</div>
-                    <div class="stat-label">学习足迹</div>
-                </div>
-            </div>
+    <div class="stats-compact">
+        <div class="stat-compact stat-clickable"
+            onclick="switchTab('fav-pane', document.querySelectorAll('.bili-tab-item')[0])">
+            <div class="stat-num-compact num-pink" id="stat-fav-count">-</div>
+            <div class="stat-label-compact">收藏</div>
+        </div>
+        <div class="stat-compact stat-clickable"
+            onclick="switchTab('history-pane', document.querySelectorAll('.bili-tab-item')[1])">
+            <div class="stat-num-compact stat-num-orange" id="stat-history-count">-</div>
+            <div class="stat-label-compact">足迹</div>
         </div>
     </div>
 </div>
